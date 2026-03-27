@@ -171,7 +171,7 @@
         localStorage.removeItem('botrix_user');
     }
     
-    // Force fresh fetch - add timestamp to prevent caching
+    // In your index.html, update the getUserData function:
     async function getUserData(viewerName) {
         const timestamp = Date.now();
         const response = await fetch(`${API_BASE_URL}/api/user/${encodeURIComponent(viewerName)}?t=${timestamp}`);
