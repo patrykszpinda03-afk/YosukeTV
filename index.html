@@ -68,8 +68,8 @@
     <div id="loginWall" class="login-wall">
         <div style="font-size: 3rem;">🎡</div>
         <h2 style="color: white;">Yosuke's Gambling Addicts</h2>
-        <p style="color: #b9c3ff;">Connect your Twitch account to place bets with your BotRix points!</p>
-        <button id="twitchLoginBtn" class="twitch-btn">🔐 LOGIN WITH TWITCH</button>
+        <p style="color: #b9c3ff;">Connect your Twitch account to gamble your points away :D</p>
+        <button id="twitchLoginBtn" class="twitch-btn">🔐 TWITCH LOGIN 🔐</button>
         <div id="loginMessage" style="margin-top: 1rem; color: #b9c3ff;"></div>
     </div>
 
@@ -79,10 +79,10 @@
                 <img id="userAvatar" class="avatar" src="">
                 <div>
                     <div class="username" id="userDisplayName"></div>
-                    <div style="font-size: 0.75rem; color:#8f9bb5;"><span id="userLogin"></span><span class="admin-only-badge">✨ BotRix Points</span></div>
+                    <div style="font-size: 0.75rem; color:#8f9bb5;"><span id="userLogin"></span><span class="admin-only-badge">✨Points✨</span></div>
                 </div>
             </div>
-            <div class="points-card"><span>🎲 BOTRIX POINTS</span><span class="points-value" id="pointsAmount">0</span></div>
+            <div class="points-card"><span>🎲 POINTS</span><span class="points-value" id="pointsAmount">0</span></div>
             <button id="logoutBtn" class="logout-btn">🚪 Disconnect</button>
         </div>
 
@@ -102,16 +102,16 @@
         <!-- Bet Card (Viewers see this) -->
         <div class="bet-card">
             <div class="bet-title">🎡 WHEEL OF FORTUNE 🎡</div>
-            <div class="bet-description">"Place your bet and hope the wheel lands in your favor! 24x multiplier on win!"</div>
+            <div class="bet-description">"Place your bet and hope the wheel lands in your favor! 24x multiplier on win!✨"</div>
             <div class="bet-controls">
                 <div class="bet-amount">
-                    <label>💰 BET AMOUNT:</label>
+                    <label>💰 BET AMOUNT 💰:</label>
                     <input type="number" id="betAmount" min="5" max="100" value="50" step="5">
-                    <span class="multiplier-badge">🎲 24x MULTIPLIER</span>
+                    <span class="multiplier-badge">🎲 24x MULTIPLIER 🎲</span>
                 </div>
-                <button id="placeBetBtn" class="place-bet-btn">🎲 PLACE BET</button>
+                <button id="placeBetBtn" class="place-bet-btn">✨ PLACE BET ✨</button>
             </div>
-            <div id="pendingBetInfo" class="pending-bet-info" style="display: none;">⏳ You have a pending bet! Waiting for streamer to resolve.</div>
+            <div id="pendingBetInfo" class="pending-bet-info" style="display: none;">⏳ You have a pending bet! Waiting for streamer to resolve the Bet ⏳</div>
         </div>
 
         <!-- Admin Panel - Shows All Pending Bets -->
