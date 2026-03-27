@@ -109,7 +109,6 @@
             cursor: pointer;
         }
 
-        /* Wheel Pool Card */
         .wheel-card {
             background: linear-gradient(135deg, #1e293b, #0f172a);
             border-radius: 2rem;
@@ -173,7 +172,7 @@
             color: white;
         }
 
-        .enter-btn {
+        .spin-btn {
             background: #9146ff;
             border: none;
             padding: 0.8rem 2rem;
@@ -185,7 +184,7 @@
             transition: 0.2s;
         }
 
-        .enter-btn:disabled {
+        .spin-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -193,14 +192,18 @@
         .admin-section {
             margin-top: 2rem;
             padding-top: 1.5rem;
-            border-top: 2px dashed #ffb347;
+            border-top: 2px solid #ffb347;
             text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
         }
 
         .admin-title {
             color: #ffb347;
-            font-size: 0.9rem;
+            font-size: 1.2rem;
             margin-bottom: 1rem;
+            font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 2px;
         }
@@ -215,21 +218,35 @@
         .win-btn {
             background: #10b981;
             border: none;
-            padding: 0.6rem 1.5rem;
+            padding: 0.8rem 2rem;
             border-radius: 2rem;
             font-weight: bold;
+            font-size: 1.1rem;
             color: white;
             cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .win-btn:hover {
+            background: #059669;
+            transform: scale(1.02);
         }
 
         .lose-btn {
             background: #ef4444;
             border: none;
-            padding: 0.6rem 1.5rem;
+            padding: 0.8rem 2rem;
             border-radius: 2rem;
             font-weight: bold;
+            font-size: 1.1rem;
             color: white;
             cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .lose-btn:hover {
+            background: #dc2626;
+            transform: scale(1.02);
         }
 
         .message-area {
@@ -242,15 +259,17 @@
             border-left: 4px solid #9146ff;
         }
 
-        .loading {
-            text-align: center;
-            color: white;
-            padding: 2rem;
+        .pending-info {
+            background: #ffb34720;
+            padding: 0.5rem;
+            border-radius: 1rem;
+            margin-top: 1rem;
+            color: #ffb347;
         }
 
         .admin-only-badge {
-            background: #ffb34720;
             display: inline-block;
+            background: #ffb34720;
             padding: 0.2rem 0.8rem;
             border-radius: 20px;
             font-size: 0.7rem;
@@ -260,7 +279,7 @@
 
         @media (max-width: 680px) {
             .wheel-name { font-size: 1.5rem; }
-            .bet-amount input { width: 100px; }
+            .win-btn, .lose-btn { padding: 0.6rem 1.2rem; font-size: 1rem; }
         }
     </style>
 </head>
@@ -307,24 +326,29 @@
                     <input type="number" id="betAmount" min="5" max="100" value="50" step="5">
                     <span class="multiplier-badge">🎲 24x MULTIPLIER</span>
                 </div>
-                <button id="spinBtn" class="enter-btn">🎡 SPIN THE WHEEL (Cost: Selected Points)</button>
+                <button id="spinBtn" class="spin-btn">🎡 SPIN THE WHEEL (Cost: Selected Points)</button>
             </div>
 
-            <!-- Admin Section (Only visible to you) -->
-            <div id="adminSection" class="admin-section" style="display: none;">
-                <div class="admin-title">🔐 ADMIN CONTROL PANEL</div>
-                <div class="admin-buttons">
-                    <button id="adminWinBtn" class="win-btn">✅ WIN (Award 24x Points)</button>
-                    <button id="adminLoseBtn" class="lose-btn">❌ LOSE (Deduct Bet Amount)</button>
-                </div>
-                <p style="font-size: 0.7rem; color: #ffb347; margin-top: 0.5rem;">
-                    Current pending spin: <span id="pendingBetDisplay">0</span> points
-                </p>
+            <div id="pendingInfo" class="pending-info" style="display: none;">
+                ⏳ Pending Spin: <span id="pendingBetAmount">0</span> points waiting for result
             </div>
         </div>
 
+        <!-- Admin Section - ALWAYS VISIBLE (Only you will use this) -->
+        <div class="admin-section">
+            <div class="admin-title">🔐 STREAMER ADMIN CONTROL PANEL</div>
+            <p style="color: #a9b6e0; font-size: 0.85rem; margin-bottom: 1rem;">
+                After spinning the wheel on wheelofnames.com, click WIN or LOSE to award points.
+            </p>
+            <div class="admin-buttons">
+                <button id="adminWinBtn" class="win-btn">✅ WIN (Award 24x Points)</button>
+                <button id="adminLoseBtn" class="lose-btn">❌ LOSE (Points Already Deducted)</button>
+            </div>
+            <div id="adminStatus" style="margin-top: 0.8rem; font-size: 0.8rem; color: #ffb347;"></div>
+        </div>
+
         <div id="notificationMessage" class="message-area">
-            💡 Enter a bet amount (5-100 points) and spin the wheel! Only you (as admin) can resolve the outcome.
+            💡 Enter a bet amount (5-100 points) and spin the wheel! Use the Admin Panel to resolve wins/losses.
         </div>
     </div>
 </div>
@@ -342,7 +366,7 @@
     let currentUser = null;
     let accessToken = null;
     let currentPoints = 0;
-    let pendingBet = null; // Stores { amount, entryId }
+    let pendingSpin = null; // Stores { amount, entryId, viewerName }
     let currentStreamerName = "YosukeTV";
     
     // ============ API FUNCTIONS ============
@@ -390,6 +414,12 @@
         }
     }
     
+    async function markEntryResolved(entryId) {
+        // This would be a backend endpoint to mark entry as resolved
+        // For now, we just clear local pending state
+        console.log(`Entry ${entryId} resolved`);
+    }
+    
     // ============ TWITCH AUTH ============
     
     function getTwitchTokenFromUrl() {
@@ -422,8 +452,6 @@
         if (points !== null) {
             currentPoints = points;
             document.getElementById('pointsAmount').innerText = points;
-            
-            // Check if there's a pending spin
             await checkPendingSpin();
         }
     }
@@ -432,64 +460,96 @@
         if (!currentUser) return;
         
         const entries = await getUserEntries(currentUser.id);
-        const pendingEntry = entries.find(e => e.poolId === "wheel_spin" && !e.resolved);
+        const pendingEntry = entries.find(e => e.poolId === "wheel_spin");
         
         if (pendingEntry) {
-            pendingBet = {
+            pendingSpin = {
                 amount: pendingEntry.cost,
-                entryId: pendingEntry._id
+                entryId: pendingEntry._id,
+                viewerName: currentUser.login
             };
-            document.getElementById('pendingBetDisplay').innerText = pendingBet.amount;
+            document.getElementById('pendingBetAmount').innerText = pendingSpin.amount;
+            document.getElementById('pendingInfo').style.display = 'block';
             document.getElementById('spinBtn').disabled = true;
-            document.getElementById('adminSection').style.display = 'block';
-            document.getElementById('notificationMessage').innerHTML = `🎡 You have a pending spin! Bet: ${pendingBet.amount} points. Resolve the outcome using the admin panel.`;
+            document.getElementById('adminStatus').innerHTML = `🎡 Active spin: ${pendingSpin.amount} points waiting for resolution`;
         } else {
-            pendingBet = null;
-            document.getElementById('pendingBetDisplay').innerText = '0';
+            pendingSpin = null;
+            document.getElementById('pendingInfo').style.display = 'none';
             document.getElementById('spinBtn').disabled = false;
-            document.getElementById('adminSection').style.display = 'none';
+            document.getElementById('adminStatus').innerHTML = '';
         }
     }
     
     async function resolveSpin(isWin) {
-        if (!pendingBet) {
-            showMessage("No pending spin to resolve!", "error");
+        if (!pendingSpin) {
+            showMessage("No pending spin to resolve! The user needs to spin first.", "error");
             return;
         }
         
-        const betAmount = pendingBet.amount;
+        const betAmount = pendingSpin.amount;
         const winAmount = betAmount * 24;
+        const viewerName = pendingSpin.viewerName;
         
         if (isWin) {
-            // AWARD POINTS: Add win amount to user's BotRix balance
-            // Note: This requires a BotRix API endpoint to add points
-            // For now, we'll simulate and notify user
-            showMessage(`🎉 WINNER! You won ${winAmount} points! (${betAmount} × 24)`, "win");
+            // WIN: Award points using BotRix !points add command
+            showMessage(`🎉 WINNER! Awarding ${winAmount} points to ${viewerName}...`, "info");
             
-            // TODO: Call BotRix API to add points (if endpoint exists)
-            // For now, we'll mark the entry as resolved and refresh points
-            await markEntryResolved(pendingBet.entryId, true, winAmount);
+            // Use BotRix API to add points
+            const addPointsSuccess = await addPointsViaBotRix(viewerName, winAmount);
+            
+            if (addPointsSuccess) {
+                showMessage(`✅ WIN! ${viewerName} won ${winAmount} points! (${betAmount} × 24)`, "win");
+            } else {
+                showMessage(`⚠️ WIN but points couldn't be added automatically. Use !points add @${viewerName} ${winAmount} in chat.`, "error");
+            }
         } else {
-            // LOSS: Points already deducted, just mark as resolved
-            showMessage(`😢 LOSS! You lost ${betAmount} points. Better luck next time!`, "lose");
-            await markEntryResolved(pendingBet.entryId, false, 0);
+            // LOSS: Points already deducted, just confirm
+            showMessage(`❌ LOSS! ${viewerName} lost ${betAmount} points. Better luck next time!`, "lose");
         }
         
-        // Refresh points
+        // Mark entry as resolved in database
+        await markEntryResolved(pendingSpin.entryId);
+        
+        // Clear pending spin
+        pendingSpin = null;
+        document.getElementById('pendingInfo').style.display = 'none';
+        document.getElementById('spinBtn').disabled = false;
+        document.getElementById('adminStatus').innerHTML = '';
+        
+        // Refresh points display
         await updatePoints();
-        await checkPendingSpin();
     }
     
-    async function markEntryResolved(entryId, isWin, winAmount) {
-        // This would require a backend endpoint to mark entries as resolved
-        // For now, we'll just remove from pending state
-        console.log(`Entry ${entryId} resolved: Win=${isWin}, Amount=${winAmount}`);
-        pendingBet = null;
+    // Function to add points using BotRix API (substractPoints with negative amount)
+    async function addPointsViaBotRix(username, amount) {
+        try {
+            // BotRix uses the same endpoint with negative points to add
+            const response = await fetch(`${API_BASE_URL}/api/add-points`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: username,
+                    amount: amount,
+                    platform: "twitch",
+                    reason: "Wheel Spin Win"
+                })
+            });
+            const data = await response.json();
+            return data.success === true;
+        } catch (error) {
+            console.error("Error adding points:", error);
+            return false;
+        }
     }
     
     async function initiateSpin() {
         if (!currentUser) {
             showMessage("Please login first", "error");
+            return;
+        }
+        
+        if (pendingSpin) {
+            showMessage("You already have a pending spin! Wait for the admin to resolve it.", "error");
             return;
         }
         
@@ -509,9 +569,12 @@
         const result = await spendPointsForSpin(currentUser.id, currentStreamerName, viewerName, betAmount);
         
         if (result.success) {
-            showMessage(`🎡 Spin initiated! Bet: ${betAmount} points. Waiting for outcome resolution...`, "info");
+            showMessage(`🎡 Spin initiated! Bet: ${betAmount} points. Now spin the wheel at wheelofnames.com and click WIN or LOSE in the Admin Panel.`, "info");
             await updatePoints();
             await checkPendingSpin();
+            
+            // Open wheelofnames.com in a new tab
+            window.open("https://wheelofnames.com/s/xk9-9qz", "_blank");
         } else {
             showMessage(result.message || "Failed to initiate spin", "error");
         }
@@ -531,7 +594,7 @@
             if (document.getElementById('notificationMessage').innerHTML === msg) {
                 msgDiv.style.borderLeftColor = "#9146ff";
             }
-        }, 4000);
+        }, 5000);
     }
     
     async function onLoginSuccess(user, token) {
@@ -551,7 +614,7 @@
     function logout() {
         currentUser = null;
         accessToken = null;
-        pendingBet = null;
+        pendingSpin = null;
         document.getElementById('dashboard').style.display = 'none';
         document.getElementById('loginWall').style.display = 'block';
         window.location.hash = '';
