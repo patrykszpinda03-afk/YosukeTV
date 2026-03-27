@@ -52,8 +52,9 @@
         .bet-details { font-size: 0.8rem; color: #a9b6e0; }
         .bet-points { color: #ffd966; font-weight: bold; }
         .bet-actions { display: flex; gap: 0.8rem; }
-        .win-bet-btn { background: #10b981; border: none; padding: 0.5rem 1.2rem; border-radius: 2rem; color: white; cursor: pointer; font-weight: bold; }
-        .lose-bet-btn { background: #ef4444; border: none; padding: 0.5rem 1.2rem; border-radius: 2rem; color: white; cursor: pointer; font-weight: bold; }
+        .global-win-btn { background: #10b981; border: none; padding: 0.8rem 2rem; border-radius: 2rem; color: white; cursor: pointer; font-weight: bold; font-size: 1rem; margin-bottom: 1rem; width: 100%; }
+        .global-lose-btn { background: #ef4444; border: none; padding: 0.8rem 2rem; border-radius: 2rem; color: white; cursor: pointer; font-weight: bold; font-size: 1rem; margin-bottom: 1rem; width: 100%; }
+        .global-buttons { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
         .no-bets { text-align: center; color: #8f9bb5; padding: 2rem; }
         
         .message-area { margin-top: 1.5rem; background: #0b0f1c; border-radius: 1.5rem; padding: 1rem; text-align: center; color: #bfcbff; border-left: 4px solid #9146ff; }
@@ -69,7 +70,7 @@
         <div style="font-size: 3rem;">🎡</div>
         <h2 style="color: white;">Yosuke's Gambling Addicts</h2>
         <p style="color: #b9c3ff;">Connect your Twitch account to gamble your points away :D</p>
-        <button id="twitchLoginBtn" class="twitch-btn">🔐 TWITCH LOGIN 🔐</button>
+        <button id="twitchLoginBtn" class="twitch-btn">TWITCH LOGIN</button>
         <div id="loginMessage" style="margin-top: 1rem; color: #b9c3ff;"></div>
     </div>
 
@@ -79,10 +80,10 @@
                 <img id="userAvatar" class="avatar" src="">
                 <div>
                     <div class="username" id="userDisplayName"></div>
-                    <div style="font-size: 0.75rem; color:#8f9bb5;"><span id="userLogin"></span><span class="admin-only-badge">✨Points✨</span></div>
+                    <div style="font-size: 0.75rem; color:#8f9bb5;"><span id="userLogin"></span><span class="admin-only-badge">✨Gambling Addict✨</span></div>
                 </div>
             </div>
-            <div class="points-card"><span>🎲 POINTS</span><span class="points-value" id="pointsAmount">0</span></div>
+            <div class="points-card"><span>🌟 Your Twitch Points: </span><span class="points-value" id="pointsAmount">0</span></div>
             <button id="logoutBtn" class="logout-btn">🚪 Disconnect</button>
         </div>
 
@@ -117,6 +118,10 @@
         <!-- Admin Panel - Shows All Pending Bets -->
         <div id="adminSection" class="admin-section" style="display: none;">
             <div class="admin-title">🔐 ADMIN CONTROL PANEL — PENDING BETS</div>
+            <div class="global-buttons">
+                <button id="globalWinBtn" class="global-win-btn">🎉 GLOBAL WIN (Award 24x to ALL pending bets) 🎉</button>
+                <button id="globalLoseBtn" class="global-lose-btn">💀 GLOBAL LOSS (ALL pending bets lose) 💀</button>
+            </div>
             <div id="betsListContainer" class="bets-list">
                 <div class="no-bets">Loading bets...</div>
             </div>
@@ -131,12 +136,34 @@
     const TWITCH_CLIENT_ID = "dxswtl8r959ihaqh4p17vpjmb19nos";
     const REDIRECT_URI = "https://yosuketv.github.io/YosukeTV/";
     const ADMIN_USERNAME = "yosuketv";
+    const BOTRIX_BID = "fgMhJa9/7J06PwfKOA7Ayg";
     
     let currentUser = null;
     let currentPoints = 0;
     let hasPendingBet = false;
     let isAdmin = false;
     let refreshInterval = null;
+    
+    // Save user session in localStorage
+    function saveUserSession(user, token) {
+        localStorage.setItem('botrix_user', JSON.stringify({ user, token, timestamp: Date.now() }));
+    }
+    
+    function loadUserSession() {
+        const saved = localStorage.getItem('botrix_user');
+        if (saved) {
+            const data = JSON.parse(saved);
+            // Session expires after 24 hours
+            if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+                return { user: data.user, token: data.token };
+            }
+        }
+        return null;
+    }
+    
+    function clearUserSession() {
+        localStorage.removeItem('botrix_user');
+    }
     
     // ============ API FUNCTIONS ============
     async function getUserData(viewerName) {
@@ -157,18 +184,16 @@
         return await response.json();
     }
     
-    async function resolveWin(betId, viewerName, betAmount) {
-        const response = await fetch(`${API_BASE_URL}/api/resolve-win`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ betId, viewerName, betAmount })
+    async function resolveAllWin() {
+        const response = await fetch(`${API_BASE_URL}/api/resolve-all-win`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }
         });
         return await response.json();
     }
     
-    async function resolveLoss(betId, viewerName) {
-        const response = await fetch(`${API_BASE_URL}/api/resolve-loss`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ betId, viewerName })
+    async function resolveAllLoss() {
+        const response = await fetch(`${API_BASE_URL}/api/resolve-all-loss`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }
         });
         return await response.json();
     }
@@ -246,7 +271,8 @@
         if (result.success) {
             showMessage(`✅ Bet placed! ${betAmount} points deducted. Waiting for streamer to resolve the wheel.`, "info");
             await updateUserData();
-            window.open("https://wheelofnames.com/s/xk9-9qz", "_blank");
+            // Redirect to Twitch channel instead of wheelofnames
+            window.open("https://www.twitch.tv/yosuketv", "_blank");
         } else {
             showMessage(result.message || "Failed to place bet", "error");
         }
@@ -269,40 +295,32 @@
                         <div class="bet-details">Bet: <span class="bet-points">${bet.betAmount} points</span> | 24x potential win: ${bet.betAmount * 24} points</div>
                         <div class="bet-details">Placed: ${new Date(bet.createdAt).toLocaleTimeString()}</div>
                     </div>
-                    <div class="bet-actions">
-                        <button class="win-bet-btn" onclick="resolveBetWin('${bet._id}', '${bet.viewerName}', ${bet.betAmount})">✅ WIN (Award ${bet.betAmount * 24})</button>
-                        <button class="lose-bet-btn" onclick="resolveBetLoss('${bet._id}', '${bet.viewerName}')">❌ LOSS</button>
-                    </div>
                 </div>
             `).join('');
         }
     }
     
-    window.resolveBetWin = async function(betId, viewerName, betAmount) {
-        const result = await resolveWin(betId, viewerName, betAmount);
+    async function handleGlobalWin() {
+        const result = await resolveAllWin();
         if (result.success) {
             showMessage(`🎉 ${result.message}`, "win");
             await refreshAdminPanel();
-            if (currentUser && currentUser.login.toLowerCase() === viewerName.toLowerCase()) {
-                await updateUserData();
-            }
+            await updateUserData();
         } else {
-            showMessage(result.message || "Failed to award win", "error");
+            showMessage(result.message || "Failed to process wins", "error");
         }
-    };
+    }
     
-    window.resolveBetLoss = async function(betId, viewerName) {
-        const result = await resolveLoss(betId, viewerName);
+    async function handleGlobalLoss() {
+        const result = await resolveAllLoss();
         if (result.success) {
-            showMessage(`❌ ${result.message}`, "lose");
+            showMessage(`💀 ${result.message}`, "lose");
             await refreshAdminPanel();
-            if (currentUser && currentUser.login.toLowerCase() === viewerName.toLowerCase()) {
-                await updateUserData();
-            }
+            await updateUserData();
         } else {
-            showMessage(result.message || "Failed to confirm loss", "error");
+            showMessage(result.message || "Failed to process losses", "error");
         }
-    };
+    }
     
     function showMessage(msg, type) {
         const msgDiv = document.getElementById('notificationMessage');
@@ -323,6 +341,10 @@
     async function onLoginSuccess(user, token) {
         currentUser = user;
         isAdmin = user.login.toLowerCase() === ADMIN_USERNAME.toLowerCase();
+        
+        // Save session
+        saveUserSession(user, token);
+        
         document.getElementById('loginWall').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('userDisplayName').innerText = user.display_name;
@@ -331,7 +353,7 @@
         
         if (isAdmin) {
             document.getElementById('adminSection').style.display = 'block';
-            document.getElementById('notificationMessage').innerHTML = '👑 Admin Mode: View and resolve pending bets below.';
+            document.getElementById('notificationMessage').innerHTML = '👑 Admin Mode: Use GLOBAL WIN/LOSS buttons to resolve ALL pending bets.';
             await refreshAdminPanel();
             refreshInterval = setInterval(refreshAdminPanel, 5000);
         }
@@ -343,26 +365,43 @@
     function logout() {
         if (refreshInterval) clearInterval(refreshInterval);
         currentUser = null; isAdmin = false;
+        clearUserSession();
         document.getElementById('dashboard').style.display = 'none';
         document.getElementById('loginWall').style.display = 'block';
         window.location.hash = '';
     }
     
     async function init() {
+        // Check for token in URL first
         const token = getTwitchTokenFromUrl();
         if (token) {
             try {
                 const userData = await fetchTwitchUser(token);
                 await onLoginSuccess({ id: userData.id, login: userData.login, display_name: userData.display_name, profile_image_url: userData.profile_image_url }, token);
                 window.history.replaceState(null, '', window.location.pathname);
-            } catch (err) { document.getElementById('loginMessage').innerHTML = '❌ Login failed.'; }
+                return;
+            } catch (err) { console.log('Token login failed'); }
         }
-        document.getElementById('twitchLoginBtn').onclick = () => {
-            window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent('user:read:email')}`;
-        };
-        document.getElementById('logoutBtn').onclick = logout;
-        document.getElementById('placeBetBtn').onclick = handlePlaceBet;
+        
+        // Check for saved session
+        const savedSession = loadUserSession();
+        if (savedSession && savedSession.token) {
+            try {
+                const userData = await fetchTwitchUser(savedSession.token);
+                await onLoginSuccess({ id: userData.id, login: userData.login, display_name: userData.display_name, profile_image_url: userData.profile_image_url }, savedSession.token);
+                return;
+            } catch (err) { clearUserSession(); }
+        }
     }
+    
+    document.getElementById('twitchLoginBtn').onclick = () => {
+        window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent('user:read:email')}`;
+    };
+    document.getElementById('logoutBtn').onclick = logout;
+    document.getElementById('placeBetBtn').onclick = handlePlaceBet;
+    document.getElementById('globalWinBtn').onclick = handleGlobalWin;
+    document.getElementById('globalLoseBtn').onclick = handleGlobalLoss;
+    
     init();
 </script>
 </body>
