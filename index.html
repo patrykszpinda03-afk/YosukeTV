@@ -277,6 +277,15 @@
             color: #ffb347;
         }
 
+        .viewer-message {
+            background: #1e293b;
+            padding: 1rem;
+            border-radius: 1rem;
+            text-align: center;
+            color: #94a3d8;
+            margin-top: 1rem;
+        }
+
         @media (max-width: 680px) {
             .wheel-name { font-size: 1.5rem; }
             .win-btn, .lose-btn { padding: 0.6rem 1.2rem; font-size: 1rem; }
@@ -334,8 +343,8 @@
             </div>
         </div>
 
-        <!-- Admin Section - ALWAYS VISIBLE (Only you will use this) -->
-        <div class="admin-section">
+        <!-- Admin Section - ONLY VISIBLE TO YosukeTV -->
+        <div id="adminSection" class="admin-section" style="display: none;">
             <div class="admin-title">🔐 STREAMER ADMIN CONTROL PANEL</div>
             <p style="color: #a9b6e0; font-size: 0.85rem; margin-bottom: 1rem;">
                 After spinning the wheel on wheelofnames.com, click WIN or LOSE to award points.
@@ -347,8 +356,13 @@
             <div id="adminStatus" style="margin-top: 0.8rem; font-size: 0.8rem; color: #ffb347;"></div>
         </div>
 
+        <!-- Viewer Message (shown to non-admin users) -->
+        <div id="viewerMessage" class="viewer-message" style="display: none;">
+            👋 You're logged in as a viewer. Spin the wheel and the streamer will resolve your result!
+        </div>
+
         <div id="notificationMessage" class="message-area">
-            💡 Enter a bet amount (5-100 points) and spin the wheel! Use the Admin Panel to resolve wins/losses.
+            💡 Enter a bet amount (5-100 points) and spin the wheel! The streamer will resolve wins/losses.
         </div>
     </div>
 </div>
@@ -361,6 +375,9 @@
     const TWITCH_CLIENT_ID = "dxswtl8r959ihaqh4p17vpjmb19nos";
     const REDIRECT_URI = "https://yosuketv.github.io/YosukeTV/";
     
+    // ADMIN TWITCH USERNAME (ONLY YOU CAN SEE THE ADMIN PANEL)
+    const ADMIN_USERNAME = "yosuketv";  // Case insensitive check
+    
     const TWITCH_SCOPES = 'user:read:email';
     
     let currentUser = null;
@@ -368,6 +385,7 @@
     let currentPoints = 0;
     let pendingSpin = null; // Stores { amount, entryId, viewerName }
     let currentStreamerName = "YosukeTV";
+    let isAdmin = false;
     
     // ============ API FUNCTIONS ============
     
@@ -415,9 +433,27 @@
     }
     
     async function markEntryResolved(entryId) {
-        // This would be a backend endpoint to mark entry as resolved
-        // For now, we just clear local pending state
         console.log(`Entry ${entryId} resolved`);
+    }
+    
+    async function addPointsViaBotRix(username, amount) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/add-points`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: username,
+                    amount: amount,
+                    platform: "twitch",
+                    reason: "Wheel Spin Win"
+                })
+            });
+            const data = await response.json();
+            return data.success === true;
+        } catch (error) {
+            console.error("Error adding points:", error);
+            return false;
+        }
     }
     
     // ============ TWITCH AUTH ============
@@ -471,12 +507,16 @@
             document.getElementById('pendingBetAmount').innerText = pendingSpin.amount;
             document.getElementById('pendingInfo').style.display = 'block';
             document.getElementById('spinBtn').disabled = true;
-            document.getElementById('adminStatus').innerHTML = `🎡 Active spin: ${pendingSpin.amount} points waiting for resolution`;
+            if (isAdmin) {
+                document.getElementById('adminStatus').innerHTML = `🎡 Active spin: ${pendingSpin.amount} points waiting for resolution`;
+            }
         } else {
             pendingSpin = null;
             document.getElementById('pendingInfo').style.display = 'none';
             document.getElementById('spinBtn').disabled = false;
-            document.getElementById('adminStatus').innerHTML = '';
+            if (isAdmin) {
+                document.getElementById('adminStatus').innerHTML = '';
+            }
         }
     }
     
@@ -491,55 +531,29 @@
         const viewerName = pendingSpin.viewerName;
         
         if (isWin) {
-            // WIN: Award points using BotRix !points add command
             showMessage(`🎉 WINNER! Awarding ${winAmount} points to ${viewerName}...`, "info");
             
-            // Use BotRix API to add points
             const addPointsSuccess = await addPointsViaBotRix(viewerName, winAmount);
             
             if (addPointsSuccess) {
                 showMessage(`✅ WIN! ${viewerName} won ${winAmount} points! (${betAmount} × 24)`, "win");
             } else {
-                showMessage(`⚠️ WIN but points couldn't be added automatically. Use !points add @${viewerName} ${winAmount} in chat.`, "error");
+                showMessage(`⚠️ WIN but points couldn't be added automatically. Use "!points add @${viewerName} ${winAmount}" in chat.`, "error");
             }
         } else {
-            // LOSS: Points already deducted, just confirm
             showMessage(`❌ LOSS! ${viewerName} lost ${betAmount} points. Better luck next time!`, "lose");
         }
         
-        // Mark entry as resolved in database
         await markEntryResolved(pendingSpin.entryId);
         
-        // Clear pending spin
         pendingSpin = null;
         document.getElementById('pendingInfo').style.display = 'none';
         document.getElementById('spinBtn').disabled = false;
-        document.getElementById('adminStatus').innerHTML = '';
-        
-        // Refresh points display
-        await updatePoints();
-    }
-    
-    // Function to add points using BotRix API (substractPoints with negative amount)
-    async function addPointsViaBotRix(username, amount) {
-        try {
-            // BotRix uses the same endpoint with negative points to add
-            const response = await fetch(`${API_BASE_URL}/api/add-points`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: username,
-                    amount: amount,
-                    platform: "twitch",
-                    reason: "Wheel Spin Win"
-                })
-            });
-            const data = await response.json();
-            return data.success === true;
-        } catch (error) {
-            console.error("Error adding points:", error);
-            return false;
+        if (isAdmin) {
+            document.getElementById('adminStatus').innerHTML = '';
         }
+        
+        await updatePoints();
     }
     
     async function initiateSpin() {
@@ -549,7 +563,7 @@
         }
         
         if (pendingSpin) {
-            showMessage("You already have a pending spin! Wait for the admin to resolve it.", "error");
+            showMessage("You already have a pending spin! Wait for the streamer to resolve it.", "error");
             return;
         }
         
@@ -569,11 +583,10 @@
         const result = await spendPointsForSpin(currentUser.id, currentStreamerName, viewerName, betAmount);
         
         if (result.success) {
-            showMessage(`🎡 Spin initiated! Bet: ${betAmount} points. Now spin the wheel at wheelofnames.com and click WIN or LOSE in the Admin Panel.`, "info");
+            showMessage(`🎡 Spin initiated! Bet: ${betAmount} points. Now spin the wheel and wait for the streamer to resolve.`, "info");
             await updatePoints();
             await checkPendingSpin();
             
-            // Open wheelofnames.com in a new tab
             window.open("https://wheelofnames.com/s/xk9-9qz", "_blank");
         } else {
             showMessage(result.message || "Failed to initiate spin", "error");
@@ -601,12 +614,26 @@
         currentUser = user;
         accessToken = token;
         
+        // Check if logged-in user is the admin (YosukeTV)
+        isAdmin = user.login.toLowerCase() === ADMIN_USERNAME.toLowerCase();
+        
         document.getElementById('loginWall').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         
         document.getElementById('userDisplayName').innerText = user.display_name;
         document.getElementById('userLogin').innerText = `@${user.login}`;
         document.getElementById('userAvatar').src = user.profile_image_url;
+        
+        // Show/hide admin panel based on who's logged in
+        if (isAdmin) {
+            document.getElementById('adminSection').style.display = 'block';
+            document.getElementById('viewerMessage').style.display = 'none';
+            document.getElementById('notificationMessage').innerHTML = '💡 Admin mode active. Use the Admin Panel to resolve spins!';
+        } else {
+            document.getElementById('adminSection').style.display = 'none';
+            document.getElementById('viewerMessage').style.display = 'block';
+            document.getElementById('notificationMessage').innerHTML = '💡 Enter a bet amount (5-100 points) and spin the wheel! The streamer will resolve your result.';
+        }
         
         await updatePoints();
     }
@@ -615,6 +642,7 @@
         currentUser = null;
         accessToken = null;
         pendingSpin = null;
+        isAdmin = false;
         document.getElementById('dashboard').style.display = 'none';
         document.getElementById('loginWall').style.display = 'block';
         window.location.hash = '';
