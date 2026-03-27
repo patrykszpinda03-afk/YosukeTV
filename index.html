@@ -296,25 +296,21 @@
 
 <script>
     // ============================================================
-    // 🔴 YOU MUST CHANGE THESE 2 VALUES BELOW 🔴
+    // ✅ YOUR CONFIGURATION (ALREADY SET)
     // ============================================================
     
-    // 1️⃣ YOUR RENDER.COM API URL (from your deployed backend)
-    const API_BASE_URL = "https://botrix-api.onrender.com";  // <--- CHANGE THIS
+    // BotRix Backend API (your Render.com URL)
+    const API_BASE_URL = "https://botrix-api.onrender.com";
     
-    // 2️⃣ YOUR TWITCH CLIENT ID (from Twitch Developer Console)
-    const TWITCH_CLIENT_ID = "dxswtl8r959ihaqh4p17vpjmb19nos";  // <--- CHANGE THIS
+    // Twitch Application Client ID (your provided ID)
+    const TWITCH_CLIENT_ID = "dxswtl8r959ihaqh4p17vpjmb19nos";
+    
+    // Hardcoded Redirect URI (must match Twitch app settings exactly)
+    const REDIRECT_URI = "https://YosukeTV.github.io/YosukeTV/";
     
     // ============================================================
-    // NOTHING ELSE NEEDS TO BE CHANGED
+    // POOLS CONFIGURATION
     // ============================================================
-    
-    // Get the base URL without any fragments or queries
-    const getBaseUrl = () => {
-        return window.location.href.split('?')[0].split('#')[0];
-    };
-    
-    const REDIRECT_URI = "https://yosuketv.github.io/YosukeTV/";
     
     const AVAILABLE_POOLS = [
         { id: "pool_valo", name: "🔫 VALORANT SKINS POOL", description: "Win a random premium skin bundle", cost: 250 },
@@ -325,7 +321,7 @@
     
     let currentUser = null;
     
-    // ============ API FUNCTIONS ============
+    // ============ API FUNCTIONS (Connect to your Backend) ============
     
     async function getUserPointsFromAPI(twitchId) {
         try {
@@ -367,7 +363,6 @@
     // ============ TWITCH AUTHENTICATION ============
     
     function getTwitchTokenFromUrl() {
-        // Check both hash and query params (in case it's in query)
         let token = null;
         
         // Check URL hash (fragment)
@@ -376,13 +371,12 @@
             token = hashParams.get('access_token');
         }
         
-        // Also check query params (some OAuth flows use this)
+        // Also check query params
         if (!token && window.location.search) {
             const queryParams = new URLSearchParams(window.location.search);
             token = queryParams.get('access_token');
         }
         
-        console.log("Token found:", token ? "Yes" : "No");
         return token;
     }
     
@@ -394,8 +388,7 @@
             }
         });
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Failed to fetch user: ${response.status} - ${errorText}`);
+            throw new Error(`Failed to fetch user: ${response.status}`);
         }
         const data = await response.json();
         if (data.data && data.data.length) {
@@ -419,7 +412,7 @@
             const enteredPoolIds = entries.map(e => e.poolId);
             renderPools(points, enteredPoolIds);
         } else {
-            document.getElementById('poolsContainer').innerHTML = `<div class="loading">⚠️ Cannot connect to API at: ${API_BASE_URL}<br>Make sure your backend is deployed!</div>`;
+            document.getElementById('poolsContainer').innerHTML = `<div class="loading">⚠️ Cannot connect to BotRix API. Check if backend is running at:<br>${API_BASE_URL}</div>`;
         }
     }
     
@@ -455,6 +448,7 @@
                 
                 const msgDiv = document.getElementById('notificationMessage');
                 msgDiv.innerHTML = '⏳ Processing...';
+                btn.disabled = true;
                 
                 const result = await joinPoolAPI(currentUser.id, poolId, pool.name, cost);
                 
@@ -463,35 +457,32 @@
                     await updateDashboard();
                 } else {
                     msgDiv.innerHTML = `⚠️ ${result.message}`;
+                    btn.disabled = false;
                 }
             });
         });
     }
     
     async function onLoginSuccess(user) {
-        console.log("Login successful for:", user.display_name);
+        console.log("✅ Login successful:", user.display_name);
         currentUser = user;
         
-        // Hide login wall, show dashboard
         document.getElementById('loginWall').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         
-        // Update user info
         document.getElementById('userDisplayName').innerText = user.display_name;
         document.getElementById('userLogin').innerText = `@${user.login}`;
         document.getElementById('userAvatar').src = user.profile_image_url || 'https://static-cdn.jtvnw.net/user-default-pictures-75305d54-c7cc-40d1-bb9c-91fbe85943bd-profile_image-300x300.png';
         
-        // Load points
         await updateDashboard();
     }
     
     function logout() {
-        console.log("Logging out");
         currentUser = null;
         document.getElementById('dashboard').style.display = 'none';
         document.getElementById('loginWall').style.display = 'block';
         
-        // Clear the URL hash to prevent auto-login on refresh
+        // Clear the URL hash
         if (window.location.hash) {
             window.history.replaceState(null, '', window.location.pathname);
         }
@@ -514,8 +505,6 @@
             
             try {
                 const userData = await fetchTwitchUser(token);
-                console.log("User data received:", userData.login);
-                
                 await onLoginSuccess({
                     id: userData.id,
                     login: userData.login,
@@ -541,7 +530,7 @@
         if (loginBtn) {
             loginBtn.onclick = () => {
                 const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=user:read:email`;
-                console.log("Redirecting to:", authUrl);
+                console.log("Redirecting to Twitch auth...");
                 window.location.href = authUrl;
             };
         }
