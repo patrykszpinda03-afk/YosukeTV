@@ -62,7 +62,7 @@
             background: rgba(0, 0, 0, 0.4);
             padding: 1rem 1.8rem;
             border-radius: 2rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
 
         .user-info {
@@ -109,6 +109,67 @@
             cursor: pointer;
         }
 
+        /* Stats Slider */
+        .stats-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-toggle {
+            background: #1e293b;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 2rem;
+            color: #ffb347;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            text-align: center;
+            transition: 0.2s;
+        }
+
+        .stats-toggle:hover {
+            background: #2d3748;
+        }
+
+        .stats-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .stats-panel.open {
+            max-height: 300px;
+            transition: max-height 0.4s ease-in;
+        }
+
+        .stats-content {
+            padding: 1rem 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #8f9bb5;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #ffd966;
+        }
+
+        /* Wheel Card */
         .wheel-card {
             background: linear-gradient(135deg, #1e293b, #0f172a);
             border-radius: 2rem;
@@ -204,8 +265,6 @@
             font-size: 1.2rem;
             margin-bottom: 1rem;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
         }
 
         .admin-buttons {
@@ -224,12 +283,6 @@
             font-size: 1.1rem;
             color: white;
             cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .win-btn:hover {
-            background: #059669;
-            transform: scale(1.02);
         }
 
         .lose-btn {
@@ -241,12 +294,6 @@
             font-size: 1.1rem;
             color: white;
             cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .lose-btn:hover {
-            background: #dc2626;
-            transform: scale(1.02);
         }
 
         .message-area {
@@ -275,15 +322,6 @@
             font-size: 0.7rem;
             margin-left: 0.5rem;
             color: #ffb347;
-        }
-
-        .viewer-message {
-            background: #1e293b;
-            padding: 1rem;
-            border-radius: 1rem;
-            text-align: center;
-            color: #94a3d8;
-            margin-top: 1rem;
         }
 
         @media (max-width: 680px) {
@@ -322,7 +360,32 @@
             <button id="logoutBtn" class="logout-btn">🚪 Disconnect</button>
         </div>
 
-        <!-- Single Wheel Pool -->
+        <!-- Stats Slider Section -->
+        <div class="stats-container">
+            <button id="statsToggleBtn" class="stats-toggle">📊 View Statistics ▼</button>
+            <div id="statsPanel" class="stats-panel">
+                <div class="stats-content" id="statsContent">
+                    <div class="stat-item">
+                        <div class="stat-label">LEVEL</div>
+                        <div class="stat-value" id="statLevel">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">WATCHTIME (min)</div>
+                        <div class="stat-value" id="statWatchtime">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">XP</div>
+                        <div class="stat-value" id="statXp">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">FOLLOWAGE (days)</div>
+                        <div class="stat-value" id="statFollowage">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wheel Card -->
         <div class="wheel-card">
             <div class="wheel-name">🎡 THE SPINNING WHEEL 🎡</div>
             <div class="wheel-description">
@@ -335,7 +398,7 @@
                     <input type="number" id="betAmount" min="5" max="100" value="50" step="5">
                     <span class="multiplier-badge">🎲 24x MULTIPLIER</span>
                 </div>
-                <button id="spinBtn" class="spin-btn">🎡 SPIN THE WHEEL (Cost: Selected Points)</button>
+                <button id="spinBtn" class="spin-btn">🎡 SPIN THE WHEEL</button>
             </div>
 
             <div id="pendingInfo" class="pending-info" style="display: none;">
@@ -343,22 +406,17 @@
             </div>
         </div>
 
-        <!-- Admin Section - ONLY VISIBLE TO YosukeTV -->
+        <!-- Admin Section - Only visible to streamer -->
         <div id="adminSection" class="admin-section" style="display: none;">
             <div class="admin-title">🔐 STREAMER ADMIN CONTROL PANEL</div>
             <p style="color: #a9b6e0; font-size: 0.85rem; margin-bottom: 1rem;">
-                After spinning the wheel on wheelofnames.com, click WIN or LOSE to award points.
+                After spinning the wheel, click WIN or LOSE to award points.
             </p>
             <div class="admin-buttons">
                 <button id="adminWinBtn" class="win-btn">✅ WIN (Award 24x Points)</button>
                 <button id="adminLoseBtn" class="lose-btn">❌ LOSE (Points Already Deducted)</button>
             </div>
             <div id="adminStatus" style="margin-top: 0.8rem; font-size: 0.8rem; color: #ffb347;"></div>
-        </div>
-
-        <!-- Viewer Message (shown to non-admin users) -->
-        <div id="viewerMessage" class="viewer-message" style="display: none;">
-            👋 You're logged in as a viewer. Spin the wheel and the streamer will resolve your result!
         </div>
 
         <div id="notificationMessage" class="message-area">
@@ -375,39 +433,42 @@
     const TWITCH_CLIENT_ID = "dxswtl8r959ihaqh4p17vpjmb19nos";
     const REDIRECT_URI = "https://yosuketv.github.io/YosukeTV/";
     
-    // ADMIN TWITCH USERNAME (ONLY YOU CAN SEE THE ADMIN PANEL)
-    const ADMIN_USERNAME = "yosuketv";  // Case insensitive check
-    
+    const ADMIN_USERNAME = "yosuketv";
     const TWITCH_SCOPES = 'user:read:email';
     
     let currentUser = null;
     let accessToken = null;
     let currentPoints = 0;
-    let pendingSpin = null; // Stores { amount, entryId, viewerName }
-    let currentStreamerName = "YosukeTV";
+    let pendingSpin = null;
     let isAdmin = false;
+    let currentStats = {
+        level: 0,
+        watchtime: 0,
+        xp: 0,
+        followage: 0
+    };
     
     // ============ API FUNCTIONS ============
     
-    async function getUserPointsFromBotRix(streamerName, viewerName) {
+    async function getUserData(viewerName) {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/points/${encodeURIComponent(streamerName)}/${encodeURIComponent(viewerName)}`);
+            const response = await fetch(`${API_BASE_URL}/api/user/${encodeURIComponent(viewerName)}`);
             const data = await response.json();
-            return data.success ? data.points : null;
+            return data;
         } catch (error) {
-            console.error("Error fetching points:", error);
+            console.error("Error fetching user data:", error);
             return null;
         }
     }
     
-    async function spendPointsForSpin(userId, streamerName, viewerName, amount) {
+    async function spendPointsForSpin(userId, viewerName, amount) {
         try {
             const response = await fetch(`${API_BASE_URL}/api/join-pool`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     userId, 
-                    streamerName, 
+                    streamerName: "YosukeTV", 
                     viewerName, 
                     poolId: "wheel_spin", 
                     poolName: "Wheel Spin", 
@@ -432,27 +493,29 @@
         }
     }
     
-    async function markEntryResolved(entryId) {
-        console.log(`Entry ${entryId} resolved`);
-    }
-    
-    async function addPointsViaBotRix(username, amount) {
+    async function resolveWin(spinId, viewerName, betAmount) {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/add-points`, {
+            const response = await fetch(`${API_BASE_URL}/api/resolve-win`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: username,
-                    amount: amount,
-                    platform: "twitch",
-                    reason: "Wheel Spin Win"
-                })
+                body: JSON.stringify({ spinId, viewerName, betAmount })
             });
-            const data = await response.json();
-            return data.success === true;
+            return await response.json();
         } catch (error) {
-            console.error("Error adding points:", error);
-            return false;
+            return { success: false, message: "Network error" };
+        }
+    }
+    
+    async function resolveLoss(spinId, viewerName) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/resolve-loss`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spinId, viewerName })
+            });
+            return await response.json();
+        } catch (error) {
+            return { success: false, message: "Network error" };
         }
     }
     
@@ -479,15 +542,22 @@
     
     // ============ UI FUNCTIONS ============
     
-    async function updatePoints() {
+    async function updateUserData() {
         if (!currentUser) return;
         
         const viewerName = currentUser.login;
-        const points = await getUserPointsFromBotRix(currentStreamerName, viewerName);
+        const data = await getUserData(viewerName);
         
-        if (points !== null) {
-            currentPoints = points;
-            document.getElementById('pointsAmount').innerText = points;
+        if (data && data.success) {
+            currentPoints = data.points;
+            currentStats = data.stats || { level: 0, watchtime: 0, xp: 0, followage: 0 };
+            
+            document.getElementById('pointsAmount').innerText = currentPoints;
+            document.getElementById('statLevel').innerText = currentStats.level;
+            document.getElementById('statWatchtime').innerText = currentStats.watchtime;
+            document.getElementById('statXp').innerText = currentStats.xp;
+            document.getElementById('statFollowage').innerText = currentStats.followage === -1 ? 'Not following' : currentStats.followage;
+            
             await checkPendingSpin();
         }
     }
@@ -496,12 +566,12 @@
         if (!currentUser) return;
         
         const entries = await getUserEntries(currentUser.id);
-        const pendingEntry = entries.find(e => e.poolId === "wheel_spin");
+        const pendingEntry = entries.find(e => e.poolId === "wheel_spin" && e.status === "pending");
         
         if (pendingEntry) {
             pendingSpin = {
-                amount: pendingEntry.cost,
-                entryId: pendingEntry._id,
+                amount: pendingEntry.betAmount,
+                spinId: pendingEntry._id,
                 viewerName: currentUser.login
             };
             document.getElementById('pendingBetAmount').innerText = pendingSpin.amount;
@@ -518,42 +588,6 @@
                 document.getElementById('adminStatus').innerHTML = '';
             }
         }
-    }
-    
-    async function resolveSpin(isWin) {
-        if (!pendingSpin) {
-            showMessage("No pending spin to resolve! The user needs to spin first.", "error");
-            return;
-        }
-        
-        const betAmount = pendingSpin.amount;
-        const winAmount = betAmount * 24;
-        const viewerName = pendingSpin.viewerName;
-        
-        if (isWin) {
-            showMessage(`🎉 WINNER! Awarding ${winAmount} points to ${viewerName}...`, "info");
-            
-            const addPointsSuccess = await addPointsViaBotRix(viewerName, winAmount);
-            
-            if (addPointsSuccess) {
-                showMessage(`✅ WIN! ${viewerName} won ${winAmount} points! (${betAmount} × 24)`, "win");
-            } else {
-                showMessage(`⚠️ WIN but points couldn't be added automatically. Use "!points add @${viewerName} ${winAmount}" in chat.`, "error");
-            }
-        } else {
-            showMessage(`❌ LOSS! ${viewerName} lost ${betAmount} points. Better luck next time!`, "lose");
-        }
-        
-        await markEntryResolved(pendingSpin.entryId);
-        
-        pendingSpin = null;
-        document.getElementById('pendingInfo').style.display = 'none';
-        document.getElementById('spinBtn').disabled = false;
-        if (isAdmin) {
-            document.getElementById('adminStatus').innerHTML = '';
-        }
-        
-        await updatePoints();
     }
     
     async function initiateSpin() {
@@ -579,17 +613,49 @@
             return;
         }
         
-        const viewerName = currentUser.login;
-        const result = await spendPointsForSpin(currentUser.id, currentStreamerName, viewerName, betAmount);
+        const result = await spendPointsForSpin(currentUser.id, currentUser.login, betAmount);
         
         if (result.success) {
             showMessage(`🎡 Spin initiated! Bet: ${betAmount} points. Now spin the wheel and wait for the streamer to resolve.`, "info");
-            await updatePoints();
+            await updateUserData();
             await checkPendingSpin();
-            
             window.open("https://wheelofnames.com/s/xk9-9qz", "_blank");
         } else {
             showMessage(result.message || "Failed to initiate spin", "error");
+        }
+    }
+    
+    async function handleWin() {
+        if (!pendingSpin) {
+            showMessage("No pending spin to resolve!", "error");
+            return;
+        }
+        
+        const result = await resolveWin(pendingSpin.spinId, pendingSpin.viewerName, pendingSpin.amount);
+        
+        if (result.success) {
+            showMessage(`🎉 ${result.message}`, "win");
+            await updateUserData();
+            await checkPendingSpin();
+        } else {
+            showMessage(result.message || "Failed to award points", "error");
+        }
+    }
+    
+    async function handleLoss() {
+        if (!pendingSpin) {
+            showMessage("No pending spin to resolve!", "error");
+            return;
+        }
+        
+        const result = await resolveLoss(pendingSpin.spinId, pendingSpin.viewerName);
+        
+        if (result.success) {
+            showMessage(`❌ ${result.message}`, "lose");
+            await updateUserData();
+            await checkPendingSpin();
+        } else {
+            showMessage(result.message || "Failed to confirm loss", "error");
         }
     }
     
@@ -610,11 +676,21 @@
         }, 5000);
     }
     
+    // Stats slider toggle
+    function setupStatsSlider() {
+        const toggleBtn = document.getElementById('statsToggleBtn');
+        const panel = document.getElementById('statsPanel');
+        
+        toggleBtn.addEventListener('click', () => {
+            panel.classList.toggle('open');
+            toggleBtn.innerHTML = panel.classList.contains('open') ? '📊 Hide Statistics ▲' : '📊 View Statistics ▼';
+        });
+    }
+    
     async function onLoginSuccess(user, token) {
         currentUser = user;
         accessToken = token;
         
-        // Check if logged-in user is the admin (YosukeTV)
         isAdmin = user.login.toLowerCase() === ADMIN_USERNAME.toLowerCase();
         
         document.getElementById('loginWall').style.display = 'none';
@@ -624,18 +700,16 @@
         document.getElementById('userLogin').innerText = `@${user.login}`;
         document.getElementById('userAvatar').src = user.profile_image_url;
         
-        // Show/hide admin panel based on who's logged in
         if (isAdmin) {
             document.getElementById('adminSection').style.display = 'block';
-            document.getElementById('viewerMessage').style.display = 'none';
             document.getElementById('notificationMessage').innerHTML = '💡 Admin mode active. Use the Admin Panel to resolve spins!';
         } else {
             document.getElementById('adminSection').style.display = 'none';
-            document.getElementById('viewerMessage').style.display = 'block';
             document.getElementById('notificationMessage').innerHTML = '💡 Enter a bet amount (5-100 points) and spin the wheel! The streamer will resolve your result.';
         }
         
-        await updatePoints();
+        await updateUserData();
+        setupStatsSlider();
     }
     
     function logout() {
@@ -673,8 +747,8 @@
         
         document.getElementById('logoutBtn').onclick = logout;
         document.getElementById('spinBtn').onclick = initiateSpin;
-        document.getElementById('adminWinBtn').onclick = () => resolveSpin(true);
-        document.getElementById('adminLoseBtn').onclick = () => resolveSpin(false);
+        document.getElementById('adminWinBtn').onclick = handleWin;
+        document.getElementById('adminLoseBtn').onclick = handleLoss;
     }
     
     init();
