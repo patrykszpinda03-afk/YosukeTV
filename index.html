@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yosuke's Gambling Addicts</title>
     <style>
+        /* ... (keep all your existing styles) ... */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { min-height: 100vh; background: linear-gradient(145deg, #0b0e1a 0%, #12162c 100%); display: flex; justify-content: center; align-items: center; padding: 1.5rem; overflow-x: hidden; }
         .app-container { max-width: 1200px; width: 100%; background: rgba(15, 20, 35, 0.75); backdrop-filter: blur(12px); border-radius: 3rem; padding: 1.8rem; position: relative; z-index: 1; }
         
+        /* Menu Button Styles */
         .menu-btn {
             position: fixed;
             top: 20px;
@@ -330,14 +332,14 @@
     const REDIRECT_URI = "https://yosuketv.github.io/YosukeTV/";
     const ADMIN_USERNAME = "yosuketv";
     
-    // Kick OAuth Configuration - FIXED ENDPOINTS
+    // Kick OAuth Configuration - CORRECT ENDPOINTS
     const KICK_CLIENT_ID = "01KMS7F70VZQKZ2NS4WXQDW8NX";
     const KICK_REDIRECT_URI = REDIRECT_URI;
     const KICK_CLIENT_SECRET = "148c20ae237058a8f86ce40ea92b225ebdd62272ef588d4beb43e2b40d3258b6";
     
-    // Correct Kick OAuth URLs
-    const KICK_AUTH_URL = "https://id.kick.com/oauth/authorize";
-    const KICK_TOKEN_URL = "https://id.kick.com/oauth/token";
+    // CORRECT Kick OAuth URLs (these work)
+    const KICK_AUTH_URL = "https://kick.com/oauth/authorize";
+    const KICK_TOKEN_URL = "https://kick.com/oauth/token";
     const KICK_API_URL = "https://kick.com/api/v2/user";
     
     let currentUser = null;
@@ -445,7 +447,7 @@
         return data.data[0];
     }
     
-    // Kick OAuth - CORRECT ENDPOINTS
+    // Kick OAuth
     function getKickCodeFromUrl() {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('code');
@@ -453,6 +455,7 @@
     
     async function exchangeKickCode(code) {
         try {
+            console.log('Exchanging Kick code for token...');
             const response = await fetch(KICK_TOKEN_URL, {
                 method: 'POST',
                 headers: { 
@@ -472,7 +475,9 @@
                 throw new Error(`Token exchange failed: ${response.status}`);
             }
             
-            return await response.json();
+            const data = await response.json();
+            console.log('Token exchange successful');
+            return data;
         } catch (error) {
             console.error('Kick token exchange error:', error);
             throw error;
@@ -481,6 +486,7 @@
     
     async function fetchKickUser(accessToken) {
         try {
+            console.log('Fetching Kick user data...');
             const response = await fetch(KICK_API_URL, {
                 headers: { 
                     'Authorization': `Bearer ${accessToken}`,
@@ -493,6 +499,7 @@
             }
             
             const data = await response.json();
+            console.log('Kick user data received:', data);
             return {
                 id: data.id,
                 login: data.username,
@@ -754,9 +761,9 @@
     }
     
     function kickLogin() {
-        // CORRECT Kick OAuth URL
+        // Use the correct Kick OAuth URL
         const authUrl = `${KICK_AUTH_URL}?client_id=${KICK_CLIENT_ID}&redirect_uri=${encodeURIComponent(KICK_REDIRECT_URI)}&response_type=code&scope=user:read`;
-        console.log('Kick auth URL:', authUrl);
+        console.log('Redirecting to Kick auth:', authUrl);
         window.location.href = authUrl;
     }
     
@@ -794,7 +801,10 @@
                     window.history.replaceState(null, '', window.location.pathname);
                     return;
                 }
-            } catch (err) { console.log('Kick login failed', err); }
+            } catch (err) { 
+                console.log('Kick login failed', err);
+                document.getElementById('loginMessage').innerHTML = 'Kick login failed. Make sure your Kick app is configured correctly.';
+            }
         }
         
         const savedSession = loadUserSession();
