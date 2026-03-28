@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yosuke's Gambling Addicts</title>
     <style>
-        /* ... (keep all your existing styles) ... */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { min-height: 100vh; background: linear-gradient(145deg, #0b0e1a 0%, #12162c 100%); display: flex; justify-content: center; align-items: center; padding: 1.5rem; overflow-x: hidden; }
         .app-container { max-width: 1200px; width: 100%; background: rgba(15, 20, 35, 0.75); backdrop-filter: blur(12px); border-radius: 3rem; padding: 1.8rem; position: relative; z-index: 1; }
         
-        /* Menu Button Styles */
         .menu-btn {
             position: fixed;
             top: 20px;
@@ -101,32 +99,73 @@
         
         /* Login Wall */
         .login-wall { background: rgba(8, 12, 25, 0.95); border-radius: 2rem; padding: 2.5rem 2rem; text-align: center; }
-        .platform-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
-        .platform-btn {
+        .login-buttons { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+        .login-btn {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
             padding: 0.8rem 1.5rem;
             border-radius: 60px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
-            color: white;
             cursor: pointer;
             transition: 0.2s;
             border: none;
+            width: 100%;
         }
-        .twitch-login-btn { background: #9146ff; box-shadow: 0 4px 0 #5a2bbf; }
+        .twitch-login-btn { background: #9146ff; color: white; box-shadow: 0 4px 0 #5a2bbf; }
         .twitch-login-btn:hover { background: #a05eff; transform: translateY(-2px); }
-        .kick-login-btn { background: #53fc18; color: #1a1a1a; box-shadow: 0 4px 0 #2f8e0e; }
-        .kick-login-btn:hover { background: #6aff3a; transform: translateY(-2px); }
+        .google-login-btn { background: #ffffff; color: #1a1a1a; box-shadow: 0 4px 0 #c0c0c0; }
+        .google-login-btn:hover { background: #f0f0f0; transform: translateY(-2px); }
+        .custom-login-btn { background: #2d3748; color: white; box-shadow: 0 4px 0 #1a202c; }
+        .custom-login-btn:hover { background: #3a4a6a; transform: translateY(-2px); }
+        
+        /* Auth Forms */
+        .auth-form {
+            background: rgba(0,0,0,0.6);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            text-align: left;
+        }
+        .auth-form input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            background: #0f172a;
+            border: 1px solid #9146ff;
+            border-radius: 1rem;
+            color: white;
+            font-size: 1rem;
+        }
+        .auth-form button {
+            width: 100%;
+            padding: 0.8rem;
+            margin-top: 0.5rem;
+            background: #9146ff;
+            border: none;
+            border-radius: 1rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .auth-form button:hover { background: #a259ff; }
+        .auth-switch {
+            text-align: center;
+            margin-top: 1rem;
+            color: #a9b6e0;
+            cursor: pointer;
+        }
+        .auth-switch:hover { color: #9146ff; }
         
         .dashboard { display: none; }
         .user-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; background: rgba(0, 0, 0, 0.4); padding: 1rem 1.8rem; border-radius: 2rem; margin-bottom: 1rem; }
         .user-info { display: flex; align-items: center; gap: 15px; }
-        .avatar { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #9146ff; object-fit: cover; }
+        .avatar { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #9146ff; object-fit: cover; background: #2d3748; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
         .username { font-size: 1.4rem; font-weight: bold; color: #f0f3ff; }
         .loggedin-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem; margin-left: 0.5rem; background: #ffb34720; color: #ffb347; }
-        .points-card { background: linear-gradient(135deg, #1e293b, #0f172a); padding: 0.7rem 1.6rem; border-radius: 60px; display: flex; align-items: baseline; gap: 10px; border-left: 4px solid #ffb347; position: relative; }
+        .points-card { background: linear-gradient(135deg, #1e293b, #0f172a); padding: 0.7rem 1.6rem; border-radius: 60px; display: flex; align-items: baseline; gap: 10px; border-left: 4px solid #ffb347; }
         .points-value { font-size: 2rem; font-weight: 800; color: #ffd966; transition: all 0.3s ease; }
         .points-updated { animation: pointFlash 0.5s ease; }
         @keyframes pointFlash { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -135,13 +174,7 @@
         .logout-btn { background: rgba(255, 70, 85, 0.2); border: 1px solid #ff5e7a; padding: 0.5rem 1.2rem; border-radius: 2rem; color: #ffb3be; cursor: pointer; }
         .refresh-btn { background: rgba(145, 70, 255, 0.2); border: 1px solid #9146ff; padding: 0.5rem 1.2rem; border-radius: 2rem; color: #b9c3ff; cursor: pointer; }
         
-        /* Platform Switcher */
-        .platform-switcher {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin: 1rem 0 1.5rem 0;
-        }
+        .platform-switcher { display: flex; gap: 1rem; justify-content: center; margin: 1rem 0 1.5rem 0; }
         .platform-option {
             padding: 0.5rem 1.5rem;
             border-radius: 2rem;
@@ -152,14 +185,7 @@
             color: #a9b6e0;
             border: 1px solid rgba(145,70,255,0.3);
         }
-        .platform-option.active {
-            background: #9146ff;
-            color: white;
-            border-color: #9146ff;
-            box-shadow: 0 0 10px rgba(145,70,255,0.5);
-        }
-        .platform-option.twitch.active { background: #9146ff; }
-        .platform-option.kick.active { background: #53fc18; color: #1a1a1a; border-color: #53fc18; }
+        .platform-option.active { background: #9146ff; color: white; border-color: #9146ff; }
         
         .stats-container { margin-bottom: 1.5rem; }
         .stats-toggle { background: #1e293b; border: none; padding: 0.6rem 1.2rem; border-radius: 2rem; color: #ffb347; cursor: pointer; font-weight: bold; width: 100%; text-align: center; }
@@ -190,8 +216,8 @@
         .bet-viewer { font-weight: bold; color: white; font-size: 1.1rem; }
         .bet-details { font-size: 0.8rem; color: #a9b6e0; }
         .bet-points { color: #ffd966; font-weight: bold; }
-        .global-win-btn { background: #10b981; border: none; padding: 0.8rem 2rem; border-radius: 2rem; color: white; cursor: pointer; font-weight: bold; font-size: 1rem; margin-bottom: 1rem; width: 100%; }
-        .global-lose-btn { background: #ef4444; border: none; padding: 0.8rem 2rem; border-radius: 2rem; color: white; cursor: pointer; font-weight: bold; font-size: 1rem; margin-bottom: 1rem; width: 100%; }
+        .global-win-btn { background: #10b981; border: none; padding: 0.8rem 2rem; border-radius: 2rem; color: white; cursor: pointer; font-weight: bold; font-size: 1rem; width: 100%; margin-bottom: 1rem; }
+        .global-lose-btn { background: #ef4444; border: none; padding: 0.8rem 2rem; border-radius: 2rem; color: white; cursor: pointer; font-weight: bold; font-size: 1rem; width: 100%; }
         .global-buttons { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
         .no-bets { text-align: center; color: #8f9bb5; padding: 2rem; }
         
@@ -204,39 +230,28 @@
 <body>
 
 <!-- Menu Button -->
-<div id="menuBtn" class="menu-btn">
-    <span>☰</span>
-</div>
+<div id="menuBtn" class="menu-btn"><span>☰</span></div>
 
 <!-- Side Menu Panel -->
 <div id="sideMenu" class="side-menu">
     <div class="menu-header">
-        <div class="menu-close" id="menuClose">
-            <span>✕</span>
-        </div>
+        <div class="menu-close" id="menuClose"><span>✕</span></div>
         <h2>🎮 Yosuke's Arena</h2>
         <p>Your gambling destination</p>
     </div>
     <div class="menu-items">
         <a href="shop.html" class="menu-item" id="buyPointsBtn">
             <div class="menu-item-icon">💰</div>
-            <div class="menu-item-content">
-                <h3>Buy Points</h3>
-                <p>Purchase additional points for more spins</p>
-            </div>
+            <div class="menu-item-content"><h3>Buy Points</h3><p>Purchase additional points</p></div>
         </a>
         <div class="menu-divider"></div>
         <div class="menu-item" id="closeMenuItem">
             <div class="menu-item-icon">❌</div>
-            <div class="menu-item-content">
-                <h3>Close Menu</h3>
-                <p>Return to the game</p>
-            </div>
+            <div class="menu-item-content"><h3>Close Menu</h3><p>Return to the game</p></div>
         </div>
     </div>
 </div>
 
-<!-- Menu Overlay -->
 <div id="menuOverlay" class="menu-overlay"></div>
 
 <div class="app-container">
@@ -244,21 +259,36 @@
         <div style="font-size: 3rem;">🎡</div>
         <h2 style="color: white;">Yosuke's Gambling Addicts</h2>
         <p style="color: #b9c3ff;">Connect your account to gamble your points away :D</p>
-        <div class="platform-buttons">
-            <button id="twitchLoginBtn" class="platform-btn twitch-login-btn">
-                <span>🎮</span> LOGIN WITH TWITCH
-            </button>
-            <button id="kickLoginBtn" class="platform-btn kick-login-btn">
-                <span>⚡</span> LOGIN WITH KICK
-            </button>
+        
+        <div class="login-buttons">
+            <button id="twitchLoginBtn" class="login-btn twitch-login-btn">🎮 LOGIN WITH TWITCH</button>
+            <button id="googleLoginBtn" class="login-btn google-login-btn">G LOGIN WITH GOOGLE</button>
+            <button id="showCustomLoginBtn" class="login-btn custom-login-btn">📧 LOGIN / REGISTER WITH EMAIL</button>
         </div>
+        
+        <div id="customAuthForm" class="auth-form" style="display: none;">
+            <div id="loginForm">
+                <input type="text" id="loginUsername" placeholder="Username" autocomplete="username">
+                <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+                <button id="loginSubmitBtn">LOGIN</button>
+                <div class="auth-switch" id="showRegisterBtn">Don't have an account? Register</div>
+            </div>
+            <div id="registerForm" style="display: none;">
+                <input type="text" id="regUsername" placeholder="Username" autocomplete="username">
+                <input type="email" id="regEmail" placeholder="Email" autocomplete="email">
+                <input type="password" id="regPassword" placeholder="Password" autocomplete="new-password">
+                <button id="registerSubmitBtn">REGISTER</button>
+                <div class="auth-switch" id="showLoginBtn">Already have an account? Login</div>
+            </div>
+        </div>
+        
         <div id="loginMessage" style="margin-top: 1rem; color: #b9c3ff;"></div>
     </div>
 
     <div id="dashboard" class="dashboard">
         <div class="user-header">
             <div class="user-info">
-                <img id="userAvatar" class="avatar" src="">
+                <div id="userAvatar" class="avatar">👤</div>
                 <div>
                     <div class="username" id="userDisplayName"></div>
                     <div style="font-size: 0.75rem; color:#8f9bb5;">
@@ -279,16 +309,15 @@
             </div>
         </div>
 
-        <!-- Platform Switcher - Toggle between Twitch and Kick points -->
         <div class="platform-switcher">
-            <div id="platformTwitch" class="platform-option twitch active">🎮 Twitch Points</div>
-            <div id="platformKick" class="platform-option kick">⚡ Kick Points</div>
+            <div id="platformTwitch" class="platform-option active">🎮 Twitch Points</div>
+            <div id="platformKick" class="platform-option">⚡ Kick Points</div>
         </div>
 
         <div class="stats-container">
             <button id="statsToggleBtn" class="stats-toggle">📊 View Statistics ▼</button>
             <div id="statsPanel" class="stats-panel">
-                <div class="stats-content" id="statsContent">
+                <div class="stats-content">
                     <div class="stat-item"><div class="stat-label">LEVEL</div><div class="stat-value" id="statLevel">-</div></div>
                     <div class="stat-item"><div class="stat-label">WATCHTIME (min)</div><div class="stat-value" id="statWatchtime">-</div></div>
                     <div class="stat-item"><div class="stat-label">XP</div><div class="stat-value" id="statXp">-</div></div>
@@ -317,39 +346,29 @@
                 <button id="globalWinBtn" class="global-win-btn">🎉 GLOBAL WIN (Award 24x to ALL pending bets) 🎉</button>
                 <button id="globalLoseBtn" class="global-lose-btn">💀 GLOBAL LOSS (ALL pending bets lose) 💀</button>
             </div>
-            <div id="betsListContainer" class="bets-list">
-                <div class="no-bets">Loading bets...</div>
-            </div>
+            <div id="betsListContainer" class="bets-list"><div class="no-bets">Loading bets...</div></div>
         </div>
 
         <div id="notificationMessage" class="message-area">💡 Place a bet (5-100 points) and wait for Yosuke to resolve the wheel spin!</div>
     </div>
 </div>
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
     const API_BASE_URL = "https://botrix-api.onrender.com";
     const TWITCH_CLIENT_ID = "dxswtl8r959ihaqh4p17vpjmb19nos";
     const REDIRECT_URI = "https://yosuketv.github.io/YosukeTV/";
     const ADMIN_USERNAME = "yosuketv";
-    
-    // Kick OAuth Configuration - CORRECT ENDPOINTS
-    const KICK_CLIENT_ID = "01KMS7F70VZQKZ2NS4WXQDW8NX";
-    const KICK_REDIRECT_URI = REDIRECT_URI;
-    const KICK_CLIENT_SECRET = "148c20ae237058a8f86ce40ea92b225ebdd62272ef588d4beb43e2b40d3258b6";
-    
-    // CORRECT Kick OAuth URLs (these work)
-    const KICK_AUTH_URL = "https://kick.com/oauth/authorize";
-    const KICK_TOKEN_URL = "https://kick.com/oauth/token";
-    const KICK_API_URL = "https://kick.com/api/v2/user";
+    const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID"; // Replace with your Google Client ID
     
     let currentUser = null;
+    let currentToken = null;
     let currentPoints = 0;
     let hasPendingBet = false;
     let isAdmin = false;
     let refreshInterval = null;
     let autoRefreshInterval = null;
     let currentViewPlatform = "twitch";
-    let loggedInPlatform = "twitch";
     
     // Menu Functions
     function openMenu() {
@@ -364,8 +383,9 @@
         document.body.style.overflow = '';
     }
     
-    function saveUserSession(user, token, platform) {
-        localStorage.setItem('botrix_user', JSON.stringify({ user, token, platform, timestamp: Date.now() }));
+    // Auth Functions
+    function saveUserSession(user, token) {
+        localStorage.setItem('botrix_user', JSON.stringify({ user, token, timestamp: Date.now() }));
     }
     
     function loadUserSession() {
@@ -373,7 +393,7 @@
         if (saved) {
             const data = JSON.parse(saved);
             if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
-                return { user: data.user, token: data.token, platform: data.platform || "twitch" };
+                return data;
             }
         }
         return null;
@@ -383,166 +403,49 @@
         localStorage.removeItem('botrix_user');
     }
     
+    async function apiCall(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        if (currentToken) {
+            headers['Authorization'] = `Bearer ${currentToken}`;
+        }
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
+        return await response.json();
+    }
+    
     async function getUserData(viewerName, platform) {
         const timestamp = Date.now();
-        const response = await fetch(`${API_BASE_URL}/api/user/${encodeURIComponent(viewerName)}?platform=${platform}&t=${timestamp}`);
+        const headers = {};
+        if (currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
+        const response = await fetch(`${API_BASE_URL}/api/user/${encodeURIComponent(viewerName)}?platform=${platform}&t=${timestamp}`, { headers });
         return await response.json();
     }
     
     async function placeBet(userId, viewerName, betAmount, twitchId, platform) {
-        const response = await fetch(`${API_BASE_URL}/api/place-bet`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, viewerName, betAmount, twitchId, platform })
+        return await apiCall('/api/place-bet', {
+            method: 'POST',
+            body: JSON.stringify({ userId, viewerName, betAmount, twitchId, platform, authToken: currentToken })
         });
-        return await response.json();
     }
     
-    async function getPendingBets() {
-        const response = await fetch(`${API_BASE_URL}/api/pending-bets`);
-        return await response.json();
-    }
-    
-    async function resolveAllWin() {
-        const response = await fetch(`${API_BASE_URL}/api/resolve-all-win`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }
-        });
-        const result = await response.json();
-        if (result.success) {
-            localStorage.setItem('forcePointsRefresh', Date.now().toString());
-        }
-        return result;
-    }
-    
-    async function resolveAllLoss() {
-        const response = await fetch(`${API_BASE_URL}/api/resolve-all-loss`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }
-        });
-        const result = await response.json();
-        if (result.success) {
-            localStorage.setItem('forcePointsRefresh', Date.now().toString());
-        }
-        return result;
-    }
-    
-    async function getUserBets(userId) {
-        const response = await fetch(`${API_BASE_URL}/api/bets/${userId}`);
-        const data = await response.json();
-        return data.bets || [];
-    }
-    
-    // Twitch OAuth
-    function getTwitchTokenFromUrl() {
-        if (window.location.hash) {
-            const params = new URLSearchParams(window.location.hash.substring(1));
-            return params.get('access_token');
-        }
-        return null;
-    }
-    
-    async function fetchTwitchUser(token) {
-        const response = await fetch('https://api.twitch.tv/helix/users', {
-            headers: { 'Authorization': `Bearer ${token}`, 'Client-Id': TWITCH_CLIENT_ID }
-        });
-        const data = await response.json();
-        return data.data[0];
-    }
-    
-    // Kick OAuth
-    function getKickCodeFromUrl() {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('code');
-    }
-    
-    async function exchangeKickCode(code) {
-        try {
-            console.log('Exchanging Kick code for token...');
-            const response = await fetch(KICK_TOKEN_URL, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    client_id: KICK_CLIENT_ID,
-                    client_secret: KICK_CLIENT_SECRET,
-                    code: code,
-                    redirect_uri: KICK_REDIRECT_URI,
-                    grant_type: 'authorization_code'
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Token exchange failed: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('Token exchange successful');
-            return data;
-        } catch (error) {
-            console.error('Kick token exchange error:', error);
-            throw error;
-        }
-    }
-    
-    async function fetchKickUser(accessToken) {
-        try {
-            console.log('Fetching Kick user data...');
-            const response = await fetch(KICK_API_URL, {
-                headers: { 
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Accept': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Kick API error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('Kick user data received:', data);
-            return {
-                id: data.id,
-                login: data.username,
-                display_name: data.username,
-                profile_image_url: data.profile_pic || 'https://kick.com/favicon.ico'
-            };
-        } catch (error) {
-            console.error('Kick user fetch error:', error);
-            throw error;
-        }
-    }
+    async function getPendingBets() { return await apiCall('/api/pending-bets'); }
+    async function resolveAllWin() { return await apiCall('/api/resolve-all-win', { method: 'POST' }); }
+    async function resolveAllLoss() { return await apiCall('/api/resolve-all-loss', { method: 'POST' }); }
+    async function getUserBets(userId) { return await apiCall(`/api/bets/${userId}`); }
     
     async function updateUserData(showLoading = false) {
         if (!currentUser) return;
-        
-        if (showLoading) {
-            const indicator = document.getElementById('refreshIndicator');
-            indicator.style.display = 'inline-block';
-        }
+        if (showLoading) document.getElementById('refreshIndicator').style.display = 'inline-block';
         
         try {
-            const data = await getUserData(currentUser.login, currentViewPlatform);
+            const data = await getUserData(currentUser.username, currentViewPlatform);
             if (data && data.success) {
                 const oldPoints = currentPoints;
                 currentPoints = data.points;
-                const pointsElement = document.getElementById('pointsAmount');
-                
-                pointsElement.innerText = currentPoints;
-                
+                document.getElementById('pointsAmount').innerText = currentPoints;
                 if (oldPoints !== currentPoints) {
-                    pointsElement.classList.add('points-updated');
-                    setTimeout(() => {
-                        pointsElement.classList.remove('points-updated');
-                    }, 500);
-                    
-                    const change = currentPoints - oldPoints;
-                    if (change > 0) {
-                        showMessage(`🎉 +${change} points! New balance: ${currentPoints}`, "win");
-                    } else if (change < 0) {
-                        showMessage(`💀 -${Math.abs(change)} points. New balance: ${currentPoints}`, "lose");
-                    }
+                    document.getElementById('pointsAmount').classList.add('points-updated');
+                    setTimeout(() => document.getElementById('pointsAmount').classList.remove('points-updated'), 500);
                 }
-                
                 if (data.stats) {
                     document.getElementById('statLevel').innerText = data.stats.level;
                     document.getElementById('statWatchtime').innerText = data.stats.watchtime;
@@ -550,49 +453,30 @@
                     document.getElementById('statFollowage').innerText = data.stats.followage === -1 ? 'Not following' : data.stats.followage;
                 }
             }
-        } catch (error) {
-            console.error('Error updating points:', error);
+        } catch (error) { console.error('Error updating points:', error);
         } finally {
-            if (showLoading) {
-                setTimeout(() => {
-                    const indicator = document.getElementById('refreshIndicator');
-                    indicator.style.display = 'none';
-                }, 500);
-            }
+            if (showLoading) setTimeout(() => document.getElementById('refreshIndicator').style.display = 'none', 500);
         }
-        
         await checkUserPendingBet();
     }
     
     async function checkUserPendingBet() {
         if (!currentUser) return;
         const bets = await getUserBets(currentUser.id);
-        const pending = bets.find(b => b.status === 'pending' && b.platform === currentViewPlatform);
+        const pending = bets.bets?.find(b => b.status === 'pending' && b.platform === currentViewPlatform);
         const oldHasPendingBet = hasPendingBet;
         hasPendingBet = !!pending;
         
         if (hasPendingBet) {
             document.getElementById('pendingBetInfo').style.display = 'block';
             document.getElementById('placeBetBtn').disabled = true;
-            
-            if (!autoRefreshInterval) {
-                autoRefreshInterval = setInterval(() => {
-                    updateUserData(false);
-                }, 2000);
-            }
+            if (!autoRefreshInterval) autoRefreshInterval = setInterval(() => updateUserData(false), 2000);
         } else {
             document.getElementById('pendingBetInfo').style.display = 'none';
             document.getElementById('placeBetBtn').disabled = false;
-            
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-            }
+            if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
         }
-        
-        if (oldHasPendingBet && !hasPendingBet) {
-            await updateUserData(true);
-        }
+        if (oldHasPendingBet && !hasPendingBet) await updateUserData(true);
     }
     
     async function handlePlaceBet() {
@@ -609,9 +493,9 @@
             return;
         }
         
-        const result = await placeBet(currentUser.id, currentUser.login, betAmount, currentUser.id, currentViewPlatform);
+        const result = await placeBet(currentUser.id, currentUser.username, betAmount, currentUser.id, currentViewPlatform);
         if (result.success) {
-            showMessage(`✅ Bet placed! ${betAmount} points deducted. Waiting for streamer to resolve the wheel.`, "info");
+            showMessage(`✅ Bet placed! ${betAmount} points deducted. Waiting for streamer to resolve.`, "info");
             await updateUserData(true);
             window.open("https://www.twitch.tv/yosuketv", "_blank");
         } else {
@@ -646,9 +530,7 @@
             showMessage(`🎉 ${result.message}`, "win");
             await refreshAdminPanel();
             await updateUserData(true);
-        } else {
-            showMessage(result.message || "Failed to process wins", "error");
-        }
+        } else { showMessage(result.message || "Failed to process wins", "error"); }
     }
     
     async function handleGlobalLoss() {
@@ -657,114 +539,149 @@
             showMessage(`💀 ${result.message}`, "lose");
             await refreshAdminPanel();
             await updateUserData(true);
-        } else {
-            showMessage(result.message || "Failed to process losses", "error");
-        }
+        } else { showMessage(result.message || "Failed to process losses", "error"); }
     }
     
     function showMessage(msg, type) {
         const msgDiv = document.getElementById('notificationMessage');
         msgDiv.innerHTML = msg;
         msgDiv.style.borderLeftColor = type === "win" ? "#10b981" : (type === "lose" ? "#ef4444" : "#9146ff");
-        setTimeout(() => { 
-            if (document.getElementById('notificationMessage').innerHTML === msg) {
-                msgDiv.style.borderLeftColor = "#9146ff";
-            }
-        }, 5000);
+        setTimeout(() => { if (document.getElementById('notificationMessage').innerHTML === msg) msgDiv.style.borderLeftColor = "#9146ff"; }, 5000);
     }
     
     function setupStatsSlider() {
         const toggleBtn = document.getElementById('statsToggleBtn');
         const panel = document.getElementById('statsPanel');
-        toggleBtn.addEventListener('click', () => {
+        toggleBtn.onclick = () => {
             panel.classList.toggle('open');
             toggleBtn.innerHTML = panel.classList.contains('open') ? '📊 Hide Statistics ▲' : '📊 View Statistics ▼';
-        });
-    }
-    
-    function setupCrossTabRefresh() {
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'forcePointsRefresh') {
-                updateUserData(true);
-            }
-        });
+        };
     }
     
     function switchViewPlatform(platform) {
         currentViewPlatform = platform;
-        
-        document.getElementById('platformTwitch').classList.remove('active');
-        document.getElementById('platformKick').classList.remove('active');
-        if (platform === 'twitch') {
-            document.getElementById('platformTwitch').classList.add('active');
-        } else {
-            document.getElementById('platformKick').classList.add('active');
-        }
-        
+        document.getElementById('platformTwitch').classList.toggle('active', platform === 'twitch');
+        document.getElementById('platformKick').classList.toggle('active', platform === 'kick');
         updateUserData(true);
     }
     
-    async function onLoginSuccess(user, token, platform) {
+    async function onLoginSuccess(user, token, authType) {
         currentUser = user;
-        loggedInPlatform = platform;
-        currentViewPlatform = platform;
-        isAdmin = user.login.toLowerCase() === ADMIN_USERNAME.toLowerCase();
-        
-        saveUserSession(user, token, platform);
+        currentToken = token;
+        isAdmin = user.username.toLowerCase() === ADMIN_USERNAME.toLowerCase();
+        saveUserSession(user, token);
         
         document.getElementById('loginWall').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
-        document.getElementById('userDisplayName').innerText = user.display_name;
-        document.getElementById('userLogin').innerText = `@${user.login}`;
-        document.getElementById('userAvatar').src = user.profile_image_url;
+        document.getElementById('userDisplayName').innerText = user.display_name || user.username;
+        document.getElementById('userLogin').innerText = `@${user.username}`;
         
         const badge = document.getElementById('loggedinBadge');
-        if (platform === 'twitch') {
-            badge.innerText = 'Logged in with TWITCH';
-            badge.style.background = '#9146ff20';
-            badge.style.color = '#9146ff';
-        } else {
-            badge.innerText = 'Logged in with KICK';
-            badge.style.background = '#53fc1820';
-            badge.style.color = '#53fc18';
-        }
-        
-        document.getElementById('platformTwitch').classList.remove('active');
-        document.getElementById('platformKick').classList.remove('active');
-        if (platform === 'twitch') {
-            document.getElementById('platformTwitch').classList.add('active');
-        } else {
-            document.getElementById('platformKick').classList.add('active');
-        }
+        if (authType === 'twitch') { badge.innerText = 'TWITCH'; badge.style.background = '#9146ff20'; badge.style.color = '#9146ff'; }
+        else if (authType === 'google') { badge.innerText = 'GOOGLE'; badge.style.background = '#ffffff20'; badge.style.color = '#ffffff'; }
+        else { badge.innerText = 'CUSTOM'; badge.style.background = '#ffb34720'; badge.style.color = '#ffb347'; }
         
         if (isAdmin) {
             document.getElementById('adminSection').style.display = 'block';
-            document.getElementById('notificationMessage').innerHTML = '👑 Admin Mode: Use GLOBAL WIN/LOSS buttons to resolve ALL pending bets.';
+            document.getElementById('notificationMessage').innerHTML = '👑 Admin Mode: Use GLOBAL WIN/LOSS buttons.';
             await refreshAdminPanel();
             refreshInterval = setInterval(refreshAdminPanel, 3000);
         }
         
         await updateUserData(true);
         setupStatsSlider();
-        setupCrossTabRefresh();
     }
     
     function logout() {
         if (refreshInterval) clearInterval(refreshInterval);
         if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-        currentUser = null; isAdmin = false;
+        currentUser = null; currentToken = null; isAdmin = false;
         clearUserSession();
         document.getElementById('dashboard').style.display = 'none';
         document.getElementById('loginWall').style.display = 'block';
+        document.getElementById('customAuthForm').style.display = 'none';
         window.location.hash = '';
-        window.history.replaceState(null, '', window.location.pathname);
     }
     
-    function kickLogin() {
-        // Use the correct Kick OAuth URL
-        const authUrl = `${KICK_AUTH_URL}?client_id=${KICK_CLIENT_ID}&redirect_uri=${encodeURIComponent(KICK_REDIRECT_URI)}&response_type=code&scope=user:read`;
-        console.log('Redirecting to Kick auth:', authUrl);
-        window.location.href = authUrl;
+    // Twitch Login
+    function getTwitchTokenFromUrl() {
+        if (window.location.hash) {
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            return params.get('access_token');
+        }
+        return null;
+    }
+    
+    async function fetchTwitchUser(token) {
+        const response = await fetch('https://api.twitch.tv/helix/users', {
+            headers: { 'Authorization': `Bearer ${token}`, 'Client-Id': TWITCH_CLIENT_ID }
+        });
+        const data = await response.json();
+        return data.data[0];
+    }
+    
+    // Google Login
+    function initializeGoogleLogin() {
+        if (typeof google === 'undefined') return;
+        google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: async (response) => {
+                try {
+                    const result = await apiCall('/api/auth/google', {
+                        method: 'POST',
+                        body: JSON.stringify({ tokenId: response.credential })
+                    });
+                    if (result.success) {
+                        await onLoginSuccess(result.user, result.token, 'google');
+                    }
+                } catch (err) { console.error('Google login error:', err); }
+            }
+        });
+        google.accounts.id.renderButton(document.getElementById('googleLoginBtn'), { theme: 'outline', size: 'large', width: '100%' });
+    }
+    
+    // Custom Auth
+    function showLoginForm() {
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('registerForm').style.display = 'none';
+    }
+    
+    function showRegisterForm() {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = 'block';
+    }
+    
+    async function handleLogin() {
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+        if (!username || !password) { showMessage('Please enter username and password', 'error'); return; }
+        
+        const result = await apiCall('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ username, password })
+        });
+        if (result.success) {
+            await onLoginSuccess(result.user, result.token, 'custom');
+        } else {
+            showMessage(result.message || 'Login failed', 'error');
+        }
+    }
+    
+    async function handleRegister() {
+        const username = document.getElementById('regUsername').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        if (!username || !email || !password) { showMessage('All fields are required', 'error'); return; }
+        
+        const result = await apiCall('/api/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({ username, email, password })
+        });
+        if (result.success) {
+            await onLoginSuccess(result.user, result.token, 'custom');
+        } else {
+            showMessage(result.message || 'Registration failed', 'error');
+        }
     }
     
     async function init() {
@@ -772,52 +689,48 @@
         document.getElementById('menuClose').onclick = closeMenu;
         document.getElementById('menuOverlay').onclick = closeMenu;
         document.getElementById('closeMenuItem').onclick = closeMenu;
-        
         document.getElementById('platformTwitch').onclick = () => switchViewPlatform('twitch');
         document.getElementById('platformKick').onclick = () => switchViewPlatform('kick');
+        document.getElementById('manualRefreshBtn').onclick = () => updateUserData(true);
+        document.getElementById('placeBetBtn').onclick = handlePlaceBet;
+        document.getElementById('globalWinBtn').onclick = handleGlobalWin;
+        document.getElementById('globalLoseBtn').onclick = handleGlobalLoss;
+        document.getElementById('logoutBtn').onclick = logout;
         
+        // Custom Auth UI
+        document.getElementById('showCustomLoginBtn').onclick = () => {
+            const form = document.getElementById('customAuthForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            showLoginForm();
+        };
+        document.getElementById('showRegisterBtn').onclick = showRegisterForm;
+        document.getElementById('showLoginBtn').onclick = showLoginForm;
+        document.getElementById('loginSubmitBtn').onclick = handleLogin;
+        document.getElementById('registerSubmitBtn').onclick = handleRegister;
+        
+        // Twitch OAuth
         const twitchToken = getTwitchTokenFromUrl();
         if (twitchToken) {
             try {
                 const userData = await fetchTwitchUser(twitchToken);
-                await onLoginSuccess({ 
-                    id: userData.id, 
-                    login: userData.login, 
-                    display_name: userData.display_name, 
-                    profile_image_url: userData.profile_image_url 
-                }, twitchToken, 'twitch');
+                await onLoginSuccess({ id: userData.id, username: userData.login, display_name: userData.display_name }, twitchToken, 'twitch');
                 window.history.replaceState(null, '', window.location.pathname);
                 return;
             } catch (err) { console.log('Twitch login failed'); }
         }
         
-        const kickCode = getKickCodeFromUrl();
-        if (kickCode) {
-            try {
-                const tokenData = await exchangeKickCode(kickCode);
-                if (tokenData.access_token) {
-                    const userData = await fetchKickUser(tokenData.access_token);
-                    await onLoginSuccess(userData, tokenData.access_token, 'kick');
-                    window.history.replaceState(null, '', window.location.pathname);
-                    return;
-                }
-            } catch (err) { 
-                console.log('Kick login failed', err);
-                document.getElementById('loginMessage').innerHTML = 'Kick login failed. Make sure your Kick app is configured correctly.';
-            }
-        }
+        // Google Login
+        initializeGoogleLogin();
         
+        // Check saved session
         const savedSession = loadUserSession();
         if (savedSession && savedSession.token) {
             try {
-                if (savedSession.platform === 'twitch') {
-                    const userData = await fetchTwitchUser(savedSession.token);
-                    await onLoginSuccess(userData, savedSession.token, 'twitch');
-                } else if (savedSession.platform === 'kick') {
-                    const userData = await fetchKickUser(savedSession.token);
-                    await onLoginSuccess(userData, savedSession.token, 'kick');
+                const verify = await apiCall('/api/auth/verify');
+                if (verify.success) {
+                    await onLoginSuccess(verify.user, savedSession.token, verify.user.authType);
+                    return;
                 }
-                return;
             } catch (err) { clearUserSession(); }
         }
     }
@@ -825,12 +738,6 @@
     document.getElementById('twitchLoginBtn').onclick = () => {
         window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent('user:read:email')}`;
     };
-    document.getElementById('kickLoginBtn').onclick = kickLogin;
-    document.getElementById('logoutBtn').onclick = logout;
-    document.getElementById('placeBetBtn').onclick = handlePlaceBet;
-    document.getElementById('globalWinBtn').onclick = handleGlobalWin;
-    document.getElementById('globalLoseBtn').onclick = handleGlobalLoss;
-    document.getElementById('manualRefreshBtn').onclick = () => updateUserData(true);
     
     init();
 </script>
