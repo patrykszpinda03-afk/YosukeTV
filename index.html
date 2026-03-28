@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yosuke's Gambling Addicts</title>
     <style>
+        /* ... (keep all your existing styles) ... */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { min-height: 100vh; background: linear-gradient(145deg, #0b0e1a 0%, #12162c 100%); display: flex; justify-content: center; align-items: center; padding: 1.5rem; overflow-x: hidden; }
         .app-container { max-width: 1200px; width: 100%; background: rgba(15, 20, 35, 0.75); backdrop-filter: blur(12px); border-radius: 3rem; padding: 1.8rem; position: relative; z-index: 1; }
@@ -97,12 +98,10 @@
         .menu-item-content p { color: #a9b6e0; font-size: 0.7rem; }
         .menu-divider { height: 1px; background: rgba(145,70,255,0.2); margin: 1rem 0; }
         
-        /* Login Wall */
         .login-wall { background: rgba(8, 12, 25, 0.95); border-radius: 2rem; padding: 2.5rem 2rem; text-align: center; }
         .twitch-login-btn { background: #9146ff; border: none; padding: 0.8rem 1.5rem; border-radius: 60px; font-size: 1.1rem; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; width: 100%; max-width: 250px; margin: 0 auto; display: block; }
         .twitch-login-btn:hover { background: #a05eff; transform: translateY(-2px); }
         
-        /* Custom Auth Forms */
         .custom-auth-section {
             margin-top: 2rem;
             padding-top: 1.5rem;
@@ -167,7 +166,6 @@
             color: #ffb347;
         }
         
-        /* Admin Secret Section */
         .admin-secret-section {
             margin-top: 1.5rem;
             padding-top: 1rem;
@@ -382,7 +380,6 @@
             </div>
         </div>
 
-        <!-- Admin Secret Section - Inside Dashboard (after login) -->
         <div id="adminSecretSection" class="admin-secret-section" style="display: none;">
             <p>🔐 Admin Access</p>
             <div class="admin-secret-input">
@@ -392,7 +389,6 @@
             <div id="adminSecretMessage" class="admin-secret-message"></div>
         </div>
 
-        <!-- Platform Switcher -->
         <div class="platform-switcher">
             <div id="platformTwitch" class="platform-option active">🎮 Twitch Points</div>
             <div id="platformKick" class="platform-option kick">⚡ Kick Points</div>
@@ -453,7 +449,6 @@
     let currentViewPlatform = "twitch";
     let currentAuthToken = null;
     
-    // Menu Functions
     function openMenu() {
         document.getElementById('sideMenu').classList.add('open');
         document.getElementById('menuOverlay').classList.add('active');
@@ -466,7 +461,7 @@
         document.body.style.overflow = '';
     }
     
-    // Auth Functions - Separate storage for Twitch and Custom
+    // Separate storage for Twitch and Custom accounts
     function saveCustomUserSession(user, token) {
         localStorage.setItem('botrix_custom_user', JSON.stringify({ user, token, timestamp: Date.now() }));
         currentAuthToken = token;
@@ -623,7 +618,6 @@
         return data.bets || [];
     }
     
-    // Twitch OAuth
     function getTwitchTokenFromUrl() {
         if (window.location.hash) {
             const params = new URLSearchParams(window.location.hash.substring(1));
@@ -836,7 +830,6 @@
         currentUser = user;
         isAdmin = user.isAdmin === true;
         
-        // Save session based on type
         if (type === 'twitch') {
             saveTwitchUserSession(user, token);
         } else {
@@ -862,18 +855,15 @@
             badge.style.color = '#ffb347';
         }
         
-        // Show admin badge if user is admin
         if (isAdmin) {
             document.getElementById('adminBadge').style.display = 'inline-block';
             document.getElementById('adminSection').style.display = 'block';
             document.getElementById('notificationMessage').innerHTML = '👑 Admin Mode: Use GLOBAL WIN/LOSS buttons to resolve ALL pending bets.';
             await refreshAdminPanel();
             refreshInterval = setInterval(refreshAdminPanel, 3000);
-            // Hide admin secret section since already admin
             document.getElementById('adminSecretSection').style.display = 'none';
         } else {
             document.getElementById('adminBadge').style.display = 'none';
-            // Show admin secret section for non-admin users
             document.getElementById('adminSecretSection').style.display = 'block';
         }
         
@@ -903,7 +893,6 @@
         document.getElementById('platformTwitch').onclick = () => switchViewPlatform('twitch');
         document.getElementById('platformKick').onclick = () => switchViewPlatform('kick');
         
-        // Auth tabs
         document.getElementById('loginTab').onclick = () => {
             document.getElementById('loginTab').classList.add('active');
             document.getElementById('registerTab').classList.remove('active');
@@ -917,7 +906,6 @@
             document.getElementById('loginForm').classList.remove('active');
         };
         
-        // Login handler
         document.getElementById('doLoginBtn').onclick = async () => {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -938,7 +926,6 @@
             }
         };
         
-        // Register handler
         document.getElementById('doRegisterBtn').onclick = async () => {
             const username = document.getElementById('regUsername').value.trim();
             const email = document.getElementById('regEmail').value.trim();
@@ -969,7 +956,6 @@
             }
         };
         
-        // Admin secret button
         document.getElementById('enableAdminBtn').onclick = enableAdminMode;
         
         // Check for Twitch login FIRST (highest priority)
@@ -1018,7 +1004,7 @@
     }
     
     document.getElementById('twitchLoginBtn').onclick = () => {
-        // Clear custom session before Twitch login to prevent conflicts
+        // Clear custom session before Twitch login
         localStorage.removeItem('botrix_custom_user');
         window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent('user:read:email')}`;
     };
