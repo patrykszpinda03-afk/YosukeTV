@@ -302,7 +302,7 @@
     const ADMIN_USERNAME = "yosuketv";
     
     // Kick OAuth Configuration
-    const KICK_CLIENT_ID = "YOUR_KICK_CLIENT_ID"; // Replace with your Kick app Client ID
+    const KICK_CLIENT_ID = "01KMS7F70VZQKZ2NS4WXQDW8NX";
     const KICK_REDIRECT_URI = REDIRECT_URI;
     
     let currentUser = null;
@@ -311,7 +311,7 @@
     let isAdmin = false;
     let refreshInterval = null;
     let autoRefreshInterval = null;
-    let currentPlatform = "twitch"; // Default platform
+    let currentPlatform = "twitch";
     
     // Menu Functions
     function openMenu() {
@@ -326,7 +326,6 @@
         document.body.style.overflow = '';
     }
     
-    // Save user session with platform
     function saveUserSession(user, token, platform) {
         localStorage.setItem('botrix_user', JSON.stringify({ user, token, platform, timestamp: Date.now() }));
     }
@@ -410,33 +409,38 @@
         return data.data[0];
     }
     
-    // Kick OAuth - Kick uses a different OAuth flow
-    function getKickTokenFromUrl() {
+    // Kick OAuth - Kick uses OAuth code flow
+    function getKickCodeFromUrl() {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('code');
     }
     
-    async function fetchKickUser(token) {
-        // Kick API endpoint to get user info
+    async function exchangeKickCode(code) {
+        const response = await fetch('https://kick.com/oauth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                client_id: KICK_CLIENT_ID,
+                client_secret: "148c20ae237058a8f86ce40ea92b225ebdd62272ef588d4beb43e2b40d3258b6",
+                code: code,
+                redirect_uri: KICK_REDIRECT_URI,
+                grant_type: 'authorization_code'
+            })
+        });
+        return await response.json();
+    }
+    
+    async function fetchKickUser(accessToken) {
         const response = await fetch('https://kick.com/api/v2/user', {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         const data = await response.json();
         return {
             id: data.id,
             login: data.username,
             display_name: data.username,
-            profile_image_url: data.profile_pic || 'https://kick.com/placeholder.png'
+            profile_image_url: data.profile_pic || 'https://kick.com/favicon.ico'
         };
-    }
-    
-    async function exchangeKickCode(code) {
-        const response = await fetch(`${API_BASE_URL}/api/kick/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, redirectUri: KICK_REDIRECT_URI })
-        });
-        return await response.json();
     }
     
     async function updateUserData(showLoading = false) {
@@ -657,7 +661,6 @@
         window.history.replaceState(null, '', window.location.pathname);
     }
     
-    // Kick Login Handler
     function kickLogin() {
         const authUrl = `https://kick.com/oauth/authorize?client_id=${KICK_CLIENT_ID}&redirect_uri=${encodeURIComponent(KICK_REDIRECT_URI)}&response_type=code&scope=user:read`;
         window.location.href = authUrl;
@@ -687,7 +690,7 @@
         }
         
         // Check for Kick code in URL
-        const kickCode = getKickTokenFromUrl();
+        const kickCode = getKickCodeFromUrl();
         if (kickCode) {
             try {
                 const tokenData = await exchangeKickCode(kickCode);
@@ -697,7 +700,7 @@
                     window.history.replaceState(null, '', window.location.pathname);
                     return;
                 }
-            } catch (err) { console.log('Kick code exchange failed'); }
+            } catch (err) { console.log('Kick code exchange failed', err); }
         }
         
         // Check for saved session
